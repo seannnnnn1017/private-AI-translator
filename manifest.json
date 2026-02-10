@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "Private Translator (LM Studio) - Firefox",
+  "version": "0.0.1",
+  "description": "Translate selected text using local LM Studio.",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "storage",
+    "<all_urls>",
+    "http://127.0.0.1:1234/*",
+    "http://localhost:1234/*",
+    "http://127.0.0.1:5005/*",
+    "http://localhost:5005/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "private-translator@example.com"
+    }
+  }
+}

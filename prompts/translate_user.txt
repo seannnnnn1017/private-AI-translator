@@ -1,1 +1,3 @@
-Translate to Traditional Chinese: {{text}}
+Translate into {{target_language}}:
+
+{{text}}

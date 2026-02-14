@@ -180,8 +180,11 @@ function ensureBox() {
     right: 16px;
     bottom: 16px;
     width: 360px;
+    min-width: 260px;
+    max-width: 80vw;
     max-height: 55vh;
     overflow: auto;
+    resize: horizontal;
     z-index: 2147483647;
     background: rgba(46, 46, 46, 0.72);
     color: #f5f5f5;

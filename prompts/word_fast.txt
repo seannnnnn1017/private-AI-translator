@@ -1,0 +1,12 @@
+Target word: {{text}}
+Context sentence: {{context}}
+
+Translate only the target word (do not translate the whole sentence). Choose the meaning that best fits the context.
+Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Add one English example sentence with **word** and a translation in {{target_language}}.
+No extra text.
+
+Format:
+**Meaning in {{target_language}}** (N.)
+English example sentence with **word**
+Translation in {{target_language}}

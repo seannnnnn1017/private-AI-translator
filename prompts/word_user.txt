@@ -1,13 +1,14 @@
-単語: {{text}}
+Word: {{text}}
 
-一般的な意味を1〜3個（無理に3つにしない／まれな用法は避ける）。固有名詞・略語・非英単語なら簡潔に説明。
-各意味：
-1. **日本語の意味** (品詞)
-   IELTS風の英文例文（**word**）
-   日本語訳
-2. **日本語の意味** (品詞)
-   IELTS風の英文例文（**word**）
-   日本語訳
-3. **日本語の意味** (品詞)
-   IELTS風の英文例文（**word**）
-   日本語訳
+Output 1-3 common senses (do not force 3; avoid rare/archaic). If proper noun/abbr/non-word, briefly note likely meaning.
+Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Each sense:
+1. **Meaning in {{target_language}}** (N.)
+   IELTS-style English example with **word**
+   Translation in {{target_language}}
+2. **Meaning in {{target_language}}** (N.)
+   IELTS-style English example with **word**
+   Translation in {{target_language}}
+3. **Meaning in {{target_language}}** (N.)
+   IELTS-style English example with **word**
+   Translation in {{target_language}}

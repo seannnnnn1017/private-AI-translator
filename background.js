@@ -10,327 +10,113 @@ const LANGUAGE_LABELS = {
   ja: "日文",
   en: "英文"
 };
+const LANGUAGE_PROMPT_NAMES = {
+  zh: "Traditional Chinese",
+  ja: "Japanese",
+  en: "English"
+};
 const LANGUAGE_VALUES = new Set(Object.keys(LANGUAGE_LABELS));
 
 const TTS_ENDPOINT = "http://127.0.0.1:5005/tts";
 
 const PROMPT_CONFIG = {
-  zh: {
-    translate: {
-      system: {
-        file: "prompts/translate_system.txt",
-        fallback:
-          "You are a professional translator. Translate accurately and naturally. Keep proper nouns and technical terms."
-      },
-      user: {
-        file: "prompts/translate_user.txt",
-        fallback: "Translate to Traditional Chinese:\n\n{{text}}"
-      }
+  translate: {
+    system: {
+      file: "prompts/translate_system.txt",
+      fallback:
+        "You are a professional translator. Translate accurately and naturally into {{target_language}}. Keep proper nouns and technical terms."
     },
-    word: {
-      system: {
-        file: "prompts/word_system_zh.txt",
-        fallback:
-          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
-      },
-      user: {
-        file: "prompts/word_user_zh.txt",
-        fallback: `請就以下單字輸出：
-1) 詞性（可多個）
-2) 意思（1〜3 個，優先常用）
-3) 每個意思給 1 句 IELTS 風格例句（Band 7+）
-
-規則:
-- 不要硬湊 3 個。若只有 1〜2 個常用意思就只輸出那些。
-- 避免罕見、不自然或古語用法。
-- 若為專有名詞、縮寫或非英文字，請簡短說明並給出最可能解釋。
-- 英文例句中的目標單字需 **加粗**。
-- 需提供例句中文翻譯。
-
-單字: {{text}}
-
-格式（Markdown，只輸出存在的意思）:
-1. **中文意思** (詞性)
-   English example sentence with **word**
-   中文翻譯
-2. **中文意思** (詞性)
-   English example sentence with **word**
-   中文翻譯
-3. **中文意思** (詞性)
-   English example sentence with **word**
-   中文翻譯`
-      }
-    },
-    wordMeaning: {
-      system: {
-        file: "prompts/word_system_zh.txt",
-        fallback:
-          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
-      },
-      user: {
-        file: "prompts/word_meaning_zh.txt",
-        fallback: `單字: {{text}}
-請列出 1-3 個常用意思（不要硬湊；避免冷僻），每個附詞性。
-格式：
-1. **中文意思** (詞性)
-2. **中文意思** (詞性)
-3. **中文意思** (詞性)`
-      }
-    },
-    wordExample: {
-      system: {
-        file: "prompts/word_system_zh.txt",
-        fallback:
-          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
-      },
-      user: {
-        file: "prompts/word_example_zh.txt",
-        fallback: `單字: {{text}}
-意思清單:
-{{meaning}}
-
-請依照上述順序，為每個意思產生 1 句 IELTS 風格英文例句（單字需 **加粗**），並提供中文翻譯。
-只輸出例句區塊，格式：
-1. 英文例句
-   中文翻譯
-2. 英文例句
-   中文翻譯
-3. 英文例句
-   中文翻譯`
-      }
-    },
-    wordFast: {
-      system: {
-        file: "prompts/word_system_zh.txt",
-        fallback:
-          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
-      },
-      user: {
-        file: "prompts/word_fast_zh.txt",
-        fallback: `目標單字: {{text}}
-情境句: {{context}}
-
-請根據情境，只翻譯目標單字（不要翻譯整句），並給出最符合情境的意思與詞性。
-再提供 1 句英文例句（單字需 **加粗**）與中文翻譯。
-只輸出結果，不要其他說明。
-
-格式：
-**中文意思** (詞性)
-English example sentence with **word**
-中文翻譯`
-      }
+    user: {
+      file: "prompts/translate_user.txt",
+      fallback: "Translate into {{target_language}}:\n\n{{text}}"
     }
   },
-  ja: {
-    translate: {
-      system: {
-        file: "prompts/translate_system_ja.txt",
-        fallback:
-          "あなたはプロの翻訳者です。正確で自然な日本語に訳し、固有名詞と専門用語は保持してください。"
-      },
-      user: {
-        file: "prompts/translate_user_ja.txt",
-        fallback: "以下の文章を日本語に翻訳してください:\n\n{{text}}"
-      }
+  word: {
+    system: {
+      file: "prompts/word_system.txt",
+      fallback:
+        "You are a bilingual lexicographer and IELTS tutor. Write explanations in {{target_language}}. Keep the target word and example sentences in English. Use Markdown with **bold** section titles."
     },
-    word: {
-      system: {
-        file: "prompts/word_system.txt",
-        fallback:
-          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
-      },
-      user: {
-        file: "prompts/word_user.txt",
-        fallback: `以下の単語について、次を出力してください:
-1) 品詞（複数可）
-2) 意味（1〜3件、一般的な用法を優先）
-3) 各意味につき IELTS 風の英作文（Band 7+）を1文ずつ
+    user: {
+      file: "prompts/word_user.txt",
+      fallback: `Word: {{text}}
 
-ルール:
-- 3つに無理やり合わせない。一般的な意味が1〜2つならそれだけ出力。
-- まれ／不自然／古語の意味は避ける。
-- 固有名詞・略語・英単語でない場合は簡潔に説明し、最も可能性の高い解釈を示す。
-- 英文例の中のターゲット語は **太字** にする。
-- 例文の日本語訳を付ける。
-
-単語: {{text}}
-
-形式（Markdown、存在する意味のみ出力）:
-1. **日本語の意味** (品詞)
-   English example sentence with **word**
-   日本語訳
-2. **日本語の意味** (品詞)
-   English example sentence with **word**
-   日本語訳
-3. **日本語の意味** (品詞)
-   English example sentence with **word**
-   日本語訳`
-      }
-    },
-    wordMeaning: {
-      system: {
-        file: "prompts/word_system.txt",
-        fallback:
-          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
-      },
-      user: {
-        file: "prompts/word_meaning_ja.txt",
-        fallback: `単語: {{text}}
-一般的な意味を1〜3個（無理に3つにしない／まれな用法は避ける）。品詞を付ける。
-形式:
-1. **日本語の意味** (品詞)
-2. **日本語の意味** (品詞)
-3. **日本語の意味** (品詞)`
-      }
-    },
-    wordExample: {
-      system: {
-        file: "prompts/word_system.txt",
-        fallback:
-          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
-      },
-      user: {
-        file: "prompts/word_example_ja.txt",
-        fallback: `単語: {{text}}
-意味リスト:
-{{meaning}}
-
-上記の順序で、各意味につき IELTS 風の英文例文を1つ（単語は **太字**）、日本語訳を付ける。
-例文のみ出力。形式:
-1. 英文例文
-   日本語訳
-2. 英文例文
-   日本語訳
-3. 英文例文
-   日本語訳`
-      }
-    },
-    wordFast: {
-      system: {
-        file: "prompts/word_system.txt",
-        fallback:
-          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
-      },
-      user: {
-        file: "prompts/word_fast_ja.txt",
-        fallback: `ターゲット単語: {{text}}
-文脈文: {{context}}
-
-文脈に基づき、単語の意味だけを1つ出力（文全体は訳さない）。
-英語の例文を1つ（単語は **太字**）と日本語訳を付ける。
-余計な説明は書かない。
-
-形式:
-**日本語の意味** (品詞)
-English example sentence with **word**
-日本語訳`
-      }
+Output 1-3 common senses (do not force 3; avoid rare/archaic). If proper noun/abbr/non-word, briefly note likely meaning.
+Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Each sense:
+1. **Meaning in {{target_language}}** (N.)
+   IELTS-style English example with **word**
+   Translation in {{target_language}}
+2. **Meaning in {{target_language}}** (N.)
+   IELTS-style English example with **word**
+   Translation in {{target_language}}
+3. **Meaning in {{target_language}}** (N.)
+   IELTS-style English example with **word**
+   Translation in {{target_language}}`
     }
   },
-  en: {
-    translate: {
-      system: {
-        file: "prompts/translate_system_en.txt",
-        fallback:
-          "You are a professional translator. Translate accurately and naturally. Keep proper nouns and technical terms."
-      },
-      user: {
-        file: "prompts/translate_user_en.txt",
-        fallback: "Translate to English:\n\n{{text}}"
-      }
+  wordMeaning: {
+    system: {
+      file: "prompts/word_system.txt",
+      fallback:
+        "You are a bilingual lexicographer and IELTS tutor. Write explanations in {{target_language}}. Keep the target word and example sentences in English. Use Markdown with **bold** section titles."
     },
-    word: {
-      system: {
-        file: "prompts/word_system_en.txt",
-        fallback:
-          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
-      },
-      user: {
-        file: "prompts/word_user_en.txt",
-        fallback: `For the word below, provide:
-1) Part of speech (may be multiple)
-2) Meaning (1-3 senses, prioritize common usage)
-3) Each sense must include exactly one IELTS-style example sentence (band 7+)
+    user: {
+      file: "prompts/word_meaning.txt",
+      fallback: `Word: {{text}}
+Context sentence: {{context}}
 
-Rules:
-- Do NOT force 3 senses. If only 1 or 2 common senses exist, output only those.
-- Avoid rare, contrived, or archaic senses.
-- If the word is a proper noun, abbreviation, or not a valid English word, say so briefly and give the most likely interpretation.
-- Keep the target word bolded in English example sentences.
-- Add a short English paraphrase of the sentence.
+Stage 1: output only meanings + POS. No examples.
+If a context sentence is provided, prioritize meanings that fit the context.
+Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Use numbered lines; one meaning per line. No extra text.
 
-Word: {{text}}
-
-Format (Markdown, only include existing senses):
-1. **Meaning in English** (POS)
-   English example sentence with **word**
-   English paraphrase
-2. **Meaning in English** (POS)
-   English example sentence with **word**
-   English paraphrase
-3. **Meaning in English** (POS)
-   English example sentence with **word**
-   English paraphrase`
-      }
-    },
-    wordMeaning: {
-      system: {
-        file: "prompts/word_system_en.txt",
-        fallback:
-          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
-      },
-      user: {
-        file: "prompts/word_meaning_en.txt",
-        fallback: `Word: {{text}}
-Give 1-3 common senses (don't force 3; avoid rare). Include POS.
 Format:
-1. **Meaning in English** (POS)
-2. **Meaning in English** (POS)
-3. **Meaning in English** (POS)`
-      }
+1. Meaning in {{target_language}} (N.)`
+    }
+  },
+  wordExample: {
+    system: {
+      file: "prompts/word_system.txt",
+      fallback:
+        "You are a bilingual lexicographer and IELTS tutor. Write explanations in {{target_language}}. Keep the target word and example sentences in English. Use Markdown with **bold** section titles."
     },
-    wordExample: {
-      system: {
-        file: "prompts/word_system_en.txt",
-        fallback:
-          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
-      },
-      user: {
-        file: "prompts/word_example_en.txt",
-        fallback: `Word: {{text}}
+    user: {
+      file: "prompts/word_example.txt",
+      fallback: `Word: {{text}}
 Meanings:
 {{meaning}}
 
-For each meaning (same order), write one IELTS-style English example sentence with **word**, and a short English paraphrase.
+For each meaning (same order), write one IELTS-style English example sentence with **word**, and a translation in {{target_language}}.
 Output only the example section:
 1. English example
-   English paraphrase
+   Translation in {{target_language}}
 2. English example
-   English paraphrase
+   Translation in {{target_language}}
 3. English example
-   English paraphrase`
-      }
+   Translation in {{target_language}}`
+    }
+  },
+  wordFast: {
+    system: {
+      file: "prompts/word_system.txt",
+      fallback:
+        "You are a bilingual lexicographer and IELTS tutor. Write explanations in {{target_language}}. Keep the target word and example sentences in English. Use Markdown with **bold** section titles."
     },
-    wordFast: {
-      system: {
-        file: "prompts/word_system_en.txt",
-        fallback:
-          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
-      },
-      user: {
-        file: "prompts/word_fast_en.txt",
-        fallback: `Target word: {{text}}
+    user: {
+      file: "prompts/word_fast.txt",
+      fallback: `Target word: {{text}}
 Context sentence: {{context}}
 
 Translate only the target word (do not translate the whole sentence). Choose the meaning that best fits the context.
-Add one English example sentence with **word** and a brief English paraphrase.
+Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Add one English example sentence with **word** and a translation in {{target_language}}.
 No extra text.
 
 Format:
-**Meaning in English** (POS)
+**Meaning in {{target_language}}** (N.)
 English example sentence with **word**
-English paraphrase`
-      }
+Translation in {{target_language}}`
     }
   }
 };
@@ -343,6 +129,14 @@ const promptsPromise = new Map();
 
 function normalizeLanguage(lang) {
   return LANGUAGE_VALUES.has(lang) ? lang : DEFAULT_LANGUAGE;
+}
+
+function getTargetLanguageName(lang) {
+  const normalized = normalizeLanguage(lang);
+  return (
+    LANGUAGE_PROMPT_NAMES[normalized] ||
+    LANGUAGE_PROMPT_NAMES[DEFAULT_LANGUAGE]
+  );
 }
 
 async function loadSettings() {
@@ -446,14 +240,14 @@ async function loadPromptSet(config) {
   return { system, user };
 }
 
-async function ensurePrompts(language) {
-  const lang = normalizeLanguage(language);
-  if (promptsCache.has(lang)) return promptsCache.get(lang);
+async function ensurePrompts() {
+  const key = "default";
+  if (promptsCache.has(key)) return promptsCache.get(key);
 
-  if (!promptsPromise.has(lang)) {
-    const config = PROMPT_CONFIG[lang] || PROMPT_CONFIG[DEFAULT_LANGUAGE];
+  if (!promptsPromise.has(key)) {
+    const config = PROMPT_CONFIG;
     promptsPromise.set(
-      lang,
+      key,
       (async () => {
         const translate = await loadPromptSet(config.translate);
         const word = await loadPromptSet(config.word);
@@ -472,8 +266,8 @@ async function ensurePrompts(language) {
     );
   }
 
-  const prompts = await promptsPromise.get(lang);
-  promptsCache.set(lang, prompts);
+  const prompts = await promptsPromise.get(key);
+  promptsCache.set(key, prompts);
   return prompts;
 }
 
@@ -769,13 +563,15 @@ async function translateWithLMStudio(
   language,
   options = {}
 ) {
-  const prompts = await ensurePrompts(language);
+  const prompts = await ensurePrompts();
   const prompt = prompts[mode] || prompts.translate;
   const system = prompt.system;
+  const targetLanguage = getTargetLanguageName(language);
   let user = applyTemplate(prompt.user, {
     text,
     meaning: options.meaning || "",
-    context: options.context || ""
+    context: options.context || "",
+    target_language: targetLanguage
   });
   const res = await fetch(`${LMSTUDIO_BASE}/v1/chat/completions`, {
     method: "POST",

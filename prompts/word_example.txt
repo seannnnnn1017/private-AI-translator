@@ -1,0 +1,12 @@
+Word: {{text}}
+Meanings:
+{{meaning}}
+
+For each meaning (same order), write one IELTS-style English example sentence with **word**, and a translation in {{target_language}}.
+Output only the example section:
+1. English example
+   Translation in {{target_language}}
+2. English example
+   Translation in {{target_language}}
+3. English example
+   Translation in {{target_language}}

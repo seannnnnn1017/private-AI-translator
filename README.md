@@ -52,27 +52,19 @@ python3 tts_server.py
 
 ## Prompts
 
-Prompts are plain text files under `prompts/`.
+Prompts are plain text files under `prompts/`. All prompts are written in English and use `{{target_language}}` to control output language (Traditional Chinese / Japanese / English).
 
 - Translation prompts:
   - `prompts/translate_system.txt`
   - `prompts/translate_user.txt`
-  - `prompts/translate_system_ja.txt`
-  - `prompts/translate_user_ja.txt`
-  - `prompts/translate_system_en.txt`
-  - `prompts/translate_user_en.txt`
 - Word mode prompts:
-  - `prompts/word_system_zh.txt`
-  - `prompts/word_user_zh.txt`
-  - `prompts/word_system.txt` (Japanese)
-  - `prompts/word_user.txt` (Japanese)
-  - `prompts/word_system_en.txt`
-  - `prompts/word_user_en.txt`
+  - `prompts/word_system.txt`
+  - `prompts/word_user.txt`
 - Two-stage word prompts:
-  - Meanings only: `prompts/word_meaning_zh.txt`, `prompts/word_meaning_ja.txt`, `prompts/word_meaning_en.txt`
-  - Examples only: `prompts/word_example_zh.txt`, `prompts/word_example_ja.txt`, `prompts/word_example_en.txt`
-- Fast word prompts (context-aware):
-  - `prompts/word_fast_zh.txt`, `prompts/word_fast_ja.txt`, `prompts/word_fast_en.txt`
+  - Meanings only: `prompts/word_meaning.txt`
+  - Examples only: `prompts/word_example.txt`
+- Fast word prompt (context-aware):
+  - `prompts/word_fast.txt`
 
 After editing prompts, reload the extension.
 

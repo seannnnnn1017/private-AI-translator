@@ -3,7 +3,8 @@ Context sentence: {{context}}
 
 Stage 1: output only meanings + POS. No examples.
 If a context sentence is provided, prioritize meanings that fit the context.
+Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
 Use numbered lines; one meaning per line. No extra text.
 
-Format (show only one item):
-1. Meaning in English (POS)
+Format:
+1. Meaning in {{target_language}} (N.)

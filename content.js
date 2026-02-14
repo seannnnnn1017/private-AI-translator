@@ -71,12 +71,14 @@ function ensureTranslateButton() {
       lastRequestRect = { ...lastSelectionRect };
     }
 
-    const text = lastSelectionText?.trim();
+    const text = getTranslateInputText();
+    const context = getSelectionContextText(text);
     if (!text) return;
     showTranslation(text, "翻譯中...", { loading: true });
     browser.runtime.sendMessage({
       type: "TRANSLATE_TEXT",
       text,
+      context,
       language: currentLanguage,
       fastMode: currentFastMode
     });
@@ -189,6 +191,7 @@ function ensureBox() {
     font-size: 13px;
     line-height: 1.4;
     white-space: pre-wrap;
+    user-select: text;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   `;
   box.setAttribute("role", "dialog");
@@ -201,12 +204,18 @@ function showTranslation(original, translated, opts = {}) {
   const safeOriginal = escapeHtml(normalizeInlineText(original));
   const safeTranslated = formatRichText(translated || "");
   const isLoading = Boolean(opts.loading);
+  const showPlay = isSingleWordText(original);
+  const showOriginal = isSingleWordText(original);
+  const headerTitle = showOriginal ? safeOriginal : "";
+  const playButtonHtml = showPlay
+    ? `<button id="pt-play" aria-label="播放" style="cursor:pointer;border:none;border-radius:999px;padding:4px 10px;background:#1d1d1d;color:#fff;font-size:12px;">播放</button>`
+    : "";
 
   container.innerHTML =
     `<div id="pt-header" style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;cursor:move;user-select:none;">` +
-    `<div style="font-weight:700;white-space:normal;">${safeOriginal}</div>` +
+    `<div style="font-weight:700;white-space:normal;">${headerTitle}</div>` +
     `<div style="display:flex;gap:6px;align-items:center;">` +
-    `<button id="pt-play" aria-label="播放" style="cursor:pointer;border:none;border-radius:999px;padding:4px 10px;background:#1d1d1d;color:#fff;font-size:12px;">播放</button>` +
+    playButtonHtml +
     `<button id="pt-close" aria-label="關閉" style="cursor:pointer;border:none;border-radius:999px;width:24px;height:24px;line-height:24px;text-align:center;background:#1d1d1d;color:#fff;font-size:16px;">×</button>` +
     `</div>` +
     `</div>` +
@@ -291,6 +300,121 @@ function normalizeInlineText(input) {
   return String(input || "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function getTranslateInputText() {
+  return lastSelectionText?.trim() || "";
+}
+
+function getSelectionContextText(selectedText) {
+  const trimmed = String(selectedText || "").trim();
+  if (!trimmed) return "";
+  if (!isSingleWordText(trimmed)) return trimmed;
+
+  const sentence = getSentenceFromSelection();
+  return sentence || trimmed;
+}
+
+function getSentenceFromSelection() {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+    return "";
+  }
+
+  const range = selection.getRangeAt(0);
+  const container = getSentenceContainer(range.commonAncestorContainer);
+  if (!container) return selection.toString().trim();
+
+  const containerText = (container.innerText || container.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!containerText) return selection.toString().trim();
+
+  let offset = 0;
+  try {
+    const preRange = document.createRange();
+    preRange.setStart(container, 0);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    offset = preRange.toString().length;
+  } catch (err) {
+    return selection.toString().trim();
+  }
+
+  const sentence = extractSentence(containerText, offset);
+  return sentence || selection.toString().trim();
+}
+
+function getSentenceContainer(node) {
+  let el = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+  const tags = new Set([
+    "P",
+    "DIV",
+    "LI",
+    "ARTICLE",
+    "SECTION",
+    "BLOCKQUOTE",
+    "TD",
+    "TH",
+    "MAIN",
+    "ASIDE",
+    "HEADER",
+    "FOOTER"
+  ]);
+
+  while (el && el !== document.body) {
+    if (el.isContentEditable) return el;
+    if (tags.has(el.tagName)) return el;
+    el = el.parentElement;
+  }
+
+  return document.body;
+}
+
+function extractSentence(text, offset) {
+  const normalized = String(text || "");
+  if (!normalized) return "";
+
+  const punct = /[.!?。？！]/;
+  let start = 0;
+  for (let i = Math.min(offset - 1, normalized.length - 1); i >= 0; i -= 1) {
+    if (punct.test(normalized[i])) {
+      start = i + 1;
+      break;
+    }
+  }
+
+  let end = normalized.length;
+  for (let i = Math.max(offset, 0); i < normalized.length; i += 1) {
+    if (punct.test(normalized[i])) {
+      end = i + 1;
+      break;
+    }
+  }
+
+  return normalized.slice(start, end).trim();
+}
+
+function sanitizeSingleWord(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return "";
+
+  let core = trimmed;
+  try {
+    core = trimmed.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+  } catch (err) {
+    core = trimmed.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "");
+  }
+
+  return core || trimmed;
+}
+
+function isSingleWordText(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return false;
+  if (/\s/.test(trimmed)) return false;
+  const core = sanitizeSingleWord(trimmed);
+  if (!core) return false;
+  return !/\s/.test(core);
 }
 
 function getSelectionTailRect(range) {

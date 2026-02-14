@@ -14,12 +14,6 @@ const LANGUAGE_VALUES = new Set(Object.keys(LANGUAGE_LABELS));
 
 const TTS_ENDPOINT = "http://127.0.0.1:5005/tts";
 
-const FAST_WORD_SUFFIX = {
-  zh: "\nAlso add one English example sentence (bold the word) and its Chinese translation.",
-  ja: "\n単語のみの場合は、英語例文を1つ（単語は**太字**）と日本語訳を付ける。",
-  en: "\nIf input is a single word, add one English example sentence with **word** and a brief English paraphrase."
-};
-
 const PROMPT_CONFIG = {
   zh: {
     translate: {
@@ -65,6 +59,65 @@ const PROMPT_CONFIG = {
 3. **中文意思** (詞性)
    English example sentence with **word**
    中文翻譯`
+      }
+    },
+    wordMeaning: {
+      system: {
+        file: "prompts/word_system_zh.txt",
+        fallback:
+          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
+      },
+      user: {
+        file: "prompts/word_meaning_zh.txt",
+        fallback: `單字: {{text}}
+請列出 1-3 個常用意思（不要硬湊；避免冷僻），每個附詞性。
+格式：
+1. **中文意思** (詞性)
+2. **中文意思** (詞性)
+3. **中文意思** (詞性)`
+      }
+    },
+    wordExample: {
+      system: {
+        file: "prompts/word_system_zh.txt",
+        fallback:
+          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
+      },
+      user: {
+        file: "prompts/word_example_zh.txt",
+        fallback: `單字: {{text}}
+意思清單:
+{{meaning}}
+
+請依照上述順序，為每個意思產生 1 句 IELTS 風格英文例句（單字需 **加粗**），並提供中文翻譯。
+只輸出例句區塊，格式：
+1. 英文例句
+   中文翻譯
+2. 英文例句
+   中文翻譯
+3. 英文例句
+   中文翻譯`
+      }
+    },
+    wordFast: {
+      system: {
+        file: "prompts/word_system_zh.txt",
+        fallback:
+          "你是雙語詞典編輯與 IELTS 講師。解釋請用繁體中文，目標單字與例句保持英文。請用 Markdown 的 **粗體** 標題。"
+      },
+      user: {
+        file: "prompts/word_fast_zh.txt",
+        fallback: `目標單字: {{text}}
+情境句: {{context}}
+
+請根據情境，只翻譯目標單字（不要翻譯整句），並給出最符合情境的意思與詞性。
+再提供 1 句英文例句（單字需 **加粗**）與中文翻譯。
+只輸出結果，不要其他說明。
+
+格式：
+**中文意思** (詞性)
+English example sentence with **word**
+中文翻譯`
       }
     }
   },
@@ -113,6 +166,65 @@ const PROMPT_CONFIG = {
    English example sentence with **word**
    日本語訳`
       }
+    },
+    wordMeaning: {
+      system: {
+        file: "prompts/word_system.txt",
+        fallback:
+          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
+      },
+      user: {
+        file: "prompts/word_meaning_ja.txt",
+        fallback: `単語: {{text}}
+一般的な意味を1〜3個（無理に3つにしない／まれな用法は避ける）。品詞を付ける。
+形式:
+1. **日本語の意味** (品詞)
+2. **日本語の意味** (品詞)
+3. **日本語の意味** (品詞)`
+      }
+    },
+    wordExample: {
+      system: {
+        file: "prompts/word_system.txt",
+        fallback:
+          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
+      },
+      user: {
+        file: "prompts/word_example_ja.txt",
+        fallback: `単語: {{text}}
+意味リスト:
+{{meaning}}
+
+上記の順序で、各意味につき IELTS 風の英文例文を1つ（単語は **太字**）、日本語訳を付ける。
+例文のみ出力。形式:
+1. 英文例文
+   日本語訳
+2. 英文例文
+   日本語訳
+3. 英文例文
+   日本語訳`
+      }
+    },
+    wordFast: {
+      system: {
+        file: "prompts/word_system.txt",
+        fallback:
+          "あなたはバイリンガルの語彙学者兼IELTS講師です。説明は日本語で簡潔に書き、ターゲット単語と例文は英語のままにしてください。Markdown で **太字** の見出しを使ってください。"
+      },
+      user: {
+        file: "prompts/word_fast_ja.txt",
+        fallback: `ターゲット単語: {{text}}
+文脈文: {{context}}
+
+文脈に基づき、単語の意味だけを1つ出力（文全体は訳さない）。
+英語の例文を1つ（単語は **太字**）と日本語訳を付ける。
+余計な説明は書かない。
+
+形式:
+**日本語の意味** (品詞)
+English example sentence with **word**
+日本語訳`
+      }
     }
   },
   en: {
@@ -160,6 +272,65 @@ Format (Markdown, only include existing senses):
    English example sentence with **word**
    English paraphrase`
       }
+    },
+    wordMeaning: {
+      system: {
+        file: "prompts/word_system_en.txt",
+        fallback:
+          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
+      },
+      user: {
+        file: "prompts/word_meaning_en.txt",
+        fallback: `Word: {{text}}
+Give 1-3 common senses (don't force 3; avoid rare). Include POS.
+Format:
+1. **Meaning in English** (POS)
+2. **Meaning in English** (POS)
+3. **Meaning in English** (POS)`
+      }
+    },
+    wordExample: {
+      system: {
+        file: "prompts/word_system_en.txt",
+        fallback:
+          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
+      },
+      user: {
+        file: "prompts/word_example_en.txt",
+        fallback: `Word: {{text}}
+Meanings:
+{{meaning}}
+
+For each meaning (same order), write one IELTS-style English example sentence with **word**, and a short English paraphrase.
+Output only the example section:
+1. English example
+   English paraphrase
+2. English example
+   English paraphrase
+3. English example
+   English paraphrase`
+      }
+    },
+    wordFast: {
+      system: {
+        file: "prompts/word_system_en.txt",
+        fallback:
+          "You are a bilingual lexicographer and IELTS tutor. Provide clear, concise explanations in English, but keep the target word and example sentences in English. Use Markdown with **bold** section titles."
+      },
+      user: {
+        file: "prompts/word_fast_en.txt",
+        fallback: `Target word: {{text}}
+Context sentence: {{context}}
+
+Translate only the target word (do not translate the whole sentence). Choose the meaning that best fits the context.
+Add one English example sentence with **word** and a brief English paraphrase.
+No extra text.
+
+Format:
+**Meaning in English** (POS)
+English example sentence with **word**
+English paraphrase`
+      }
     }
   }
 };
@@ -172,11 +343,6 @@ const promptsPromise = new Map();
 
 function normalizeLanguage(lang) {
   return LANGUAGE_VALUES.has(lang) ? lang : DEFAULT_LANGUAGE;
-}
-
-function getFastWordSuffix(language) {
-  const lang = normalizeLanguage(language);
-  return FAST_WORD_SUFFIX[lang] || FAST_WORD_SUFFIX[DEFAULT_LANGUAGE] || "";
 }
 
 async function loadSettings() {
@@ -271,6 +437,15 @@ async function loadPromptFile(path, fallback) {
   }
 }
 
+async function loadPromptSet(config) {
+  const [system, user] = await Promise.all([
+    loadPromptFile(config.system.file, config.system.fallback),
+    loadPromptFile(config.user.file, config.user.fallback)
+  ]);
+
+  return { system, user };
+}
+
 async function ensurePrompts(language) {
   const lang = normalizeLanguage(language);
   if (promptsCache.has(lang)) return promptsCache.get(lang);
@@ -280,24 +455,19 @@ async function ensurePrompts(language) {
     promptsPromise.set(
       lang,
       (async () => {
-        const [translateSystem, translateUser, wordSystem, wordUser] =
-          await Promise.all([
-            loadPromptFile(
-              config.translate.system.file,
-              config.translate.system.fallback
-            ),
-            loadPromptFile(
-              config.translate.user.file,
-              config.translate.user.fallback
-            ),
-            loadPromptFile(config.word.system.file, config.word.system.fallback),
-            loadPromptFile(config.word.user.file, config.word.user.fallback)
-          ]);
+        const translate = await loadPromptSet(config.translate);
+        const word = await loadPromptSet(config.word);
+        const wordMeaning = await loadPromptSet(
+          config.wordMeaning || config.word
+        );
+        const wordExample = await loadPromptSet(
+          config.wordExample || config.word
+        );
+        const wordFast = await loadPromptSet(
+          config.wordFast || config.word
+        );
 
-        return {
-          translate: { system: translateSystem, user: translateUser },
-          word: { system: wordSystem, user: wordUser }
-        };
+        return { translate, word, wordMeaning, wordExample, wordFast };
       })()
     );
   }
@@ -308,7 +478,70 @@ async function ensurePrompts(language) {
 }
 
 function applyTemplate(template, vars) {
-  return template.replace(/\{\{\s*text\s*\}\}/g, vars.text);
+  return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key) => {
+    const value = vars[key];
+    return value == null ? "" : String(value);
+  });
+}
+
+function parseNumberedBlocks(text) {
+  const lines = String(text || "").split(/\r?\n/);
+  const blocks = [];
+  let current = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const match = line.match(/^(\d+)[.)]\s*(.+)$/);
+    if (match) {
+      if (current) blocks.push(current);
+      current = { num: match[1], line: match[2], extra: [] };
+      continue;
+    }
+    if (current) current.extra.push(line);
+  }
+
+  if (current) blocks.push(current);
+  return blocks;
+}
+
+function limitMeaningList(text, maxItems = 3) {
+  const blocks = parseNumberedBlocks(text);
+  if (blocks.length) {
+    const limited = blocks.slice(0, maxItems).map((block, index) => ({
+      num: String(index + 1),
+      line: block.line
+    }));
+    return limited.map((block) => `${block.num}. ${block.line}`).join("\n");
+  }
+
+  const lines = String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, maxItems);
+
+  return lines.join("\n");
+}
+
+function mergeMeaningAndExamples(meaningText, exampleText) {
+  const meanings = parseNumberedBlocks(meaningText);
+  if (!meanings.length) return `${meaningText}\n\n${exampleText}`.trim();
+
+  const examples = parseNumberedBlocks(exampleText);
+  const exampleMap = new Map(examples.map((b) => [b.num, b]));
+
+  const blocks = meanings.map((meaning) => {
+    const lines = [`${meaning.num}. ${meaning.line}`];
+    const ex = exampleMap.get(meaning.num);
+    if (ex) {
+      lines.push(ex.line);
+      if (ex.extra.length) lines.push(...ex.extra);
+    }
+    return lines.join("\n");
+  });
+
+  return blocks.join("\n\n");
 }
 
 function sanitizeSingleWord(text) {
@@ -332,6 +565,56 @@ function isSingleWord(text) {
   return Boolean(sanitizeSingleWord(trimmed));
 }
 
+async function sendWordTwoStage(
+  tabId,
+  originalText,
+  promptText,
+  language,
+  context
+) {
+  const rawMeaning = await translateWithLMStudio(
+    promptText,
+    "wordMeaning",
+    language,
+    { context }
+  );
+  const meaning = limitMeaningList(rawMeaning, 3);
+
+  if (tabId != null) {
+    browser.tabs.sendMessage(tabId, {
+      type: "SHOW_TRANSLATION",
+      original: originalText,
+      translated: meaning
+    });
+  }
+
+  try {
+    const examples = await translateWithLMStudio(
+      promptText,
+      "wordExample",
+      language,
+      { meaning }
+    );
+
+    const combined = mergeMeaningAndExamples(meaning, examples);
+    if (tabId != null) {
+      browser.tabs.sendMessage(tabId, {
+        type: "SHOW_TRANSLATION",
+        original: originalText,
+        translated: combined
+      });
+    }
+  } catch (err) {
+    if (tabId != null) {
+      browser.tabs.sendMessage(tabId, {
+        type: "SHOW_TRANSLATION",
+        original: originalText,
+        translated: `${meaning}\n\n（例句生成失敗）`
+      });
+    }
+  }
+}
+
 ensureSettingsLoaded();
 
 browser.runtime.onInstalled.addListener(() => {
@@ -352,14 +635,30 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 
   try {
     const isWord = isSingleWord(text);
-    const mode = currentFastMode ? "translate" : isWord ? "word" : "translate";
+    const mode = currentFastMode
+      ? isWord
+        ? "wordFast"
+        : "translate"
+      : isWord
+        ? "word"
+        : "translate";
     const promptText = isWord ? sanitizeSingleWord(text) : text;
-    const includeExample = currentFastMode && isWord;
+    const context = "";
+    if (isWord && !currentFastMode) {
+      await sendWordTwoStage(
+        tab.id,
+        text,
+        promptText,
+        currentLanguage,
+        context
+      );
+      return;
+    }
     const translated = await translateWithLMStudio(
       promptText,
       mode,
       currentLanguage,
-      { includeExample }
+      { context }
     );
     browser.tabs.sendMessage(tab.id, {
       type: "SHOW_TRANSLATION",
@@ -413,6 +712,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   const isWord = isSingleWord(text);
   const promptText = isWord ? sanitizeSingleWord(text) : text;
+  const context = isWord ? String(msg.context || "").trim() : "";
 
   const tabId = sender?.tab?.id;
   const sendResult = async () => {
@@ -423,15 +723,24 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.language) await setLanguage(language);
     if (typeof msg.fastMode === "boolean") await setFastMode(fastMode);
 
-    const mode = fastMode ? "translate" : isWord ? "word" : "translate";
-    const includeExample = fastMode && isWord;
+    const mode = fastMode
+      ? isWord
+        ? "wordFast"
+        : "translate"
+      : isWord
+        ? "word"
+        : "translate";
 
     try {
+      if (isWord && !fastMode) {
+        await sendWordTwoStage(tabId, text, promptText, language, context);
+        return;
+      }
       const translated = await translateWithLMStudio(
         promptText,
         mode,
         language,
-        { includeExample }
+        { context }
       );
       if (tabId != null) {
         browser.tabs.sendMessage(tabId, {
@@ -463,11 +772,11 @@ async function translateWithLMStudio(
   const prompts = await ensurePrompts(language);
   const prompt = prompts[mode] || prompts.translate;
   const system = prompt.system;
-  let user = applyTemplate(prompt.user, { text });
-  if (options.includeExample) {
-    user = `${user}${getFastWordSuffix(language)}`;
-  }
-
+  let user = applyTemplate(prompt.user, {
+    text,
+    meaning: options.meaning || "",
+    context: options.context || ""
+  });
   const res = await fetch(`${LMSTUDIO_BASE}/v1/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

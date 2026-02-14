@@ -1,0 +1,11 @@
+Target word: {{text}}
+Context sentence: {{context}}
+
+Translate only the target word (do not translate the whole sentence). Choose the meaning that best fits the context.
+Add one English example sentence with **word** and a brief English paraphrase.
+No extra text.
+
+Format:
+**Meaning in English** (POS)
+English example sentence with **word**
+English paraphrase

@@ -1,0 +1,9 @@
+Word: {{text}}
+Context sentence: {{context}}
+
+Stage 1: output only meanings + POS. No examples.
+If a context sentence is provided, prioritize meanings that fit the context.
+Use numbered lines; one meaning per line. No extra text.
+
+Format (show only one item):
+1. Meaning in English (POS)

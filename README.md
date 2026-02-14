@@ -38,7 +38,7 @@ const MODEL = "qwen/qwen3-8b";
 
 ```bash
 pip install pyttsx3
-python3 test.py
+python3 tts_server.py
 ```
 
 ## How to Use
@@ -86,12 +86,12 @@ When **快速翻譯** is enabled:
 ## Troubleshooting
 
 - No translation: verify LM Studio is running and `MODEL` is correct.
-- No TTS audio: verify `python3 test.py` is running and `say "hello"` works.
+- No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
 - Changes not applied: reload the extension in `about:debugging`.
 
 ## Files
 
 - `content.js`: selection UI, floating panel, settings UI, TTS button
 - `background.js`: LM Studio request, prompt loading, language/fast mode, TTS request
-- `test.py`: local pyttsx3 TTS server
+- `tts_server.py`: local pyttsx3 TTS server
 - `manifest.json`: extension manifest

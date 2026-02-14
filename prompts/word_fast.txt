@@ -4,9 +4,9 @@ Context sentence: {{context}}
 Translate only the target word (do not translate the whole sentence). Choose the meaning that best fits the context.
 Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
 Add one English example sentence with **word** and a translation in {{target_language}}.
-No extra text.
+Do NOT output labels like "Meaning in ..." or "English example sentence with word" or "Translation in ...".
+Output exactly three lines in this order:
 
-Format:
-**Meaning in {{target_language}}** (N.)
-English example sentence with **word**
-Translation in {{target_language}}
+1) **<meaning in {{target_language}}>** (N.)
+2) <English example sentence with **word**>
+3) <Translation in {{target_language}}>

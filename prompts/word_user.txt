@@ -2,13 +2,14 @@ Word: {{text}}
 
 Output 1-3 common senses (do not force 3; avoid rare/archaic). If proper noun/abbr/non-word, briefly note likely meaning.
 Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Do NOT output labels like "Meaning in ..." or "Translation in ...".
 Each sense:
-1. **Meaning in {{target_language}}** (N.)
-   IELTS-style English example with **word**
-   Translation in {{target_language}}
-2. **Meaning in {{target_language}}** (N.)
-   IELTS-style English example with **word**
-   Translation in {{target_language}}
-3. **Meaning in {{target_language}}** (N.)
-   IELTS-style English example with **word**
-   Translation in {{target_language}}
+1. **<meaning in {{target_language}}>** (N.)
+   <IELTS-style English example with **word**>
+   <Translation in {{target_language}}>
+2. **<meaning in {{target_language}}>** (N.)
+   <IELTS-style English example with **word**>
+   <Translation in {{target_language}}>
+3. **<meaning in {{target_language}}>** (N.)
+   <IELTS-style English example with **word**>
+   <Translation in {{target_language}}>

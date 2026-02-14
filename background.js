@@ -565,14 +565,15 @@ async function translateWithLMStudio(
 ) {
   const prompts = await ensurePrompts();
   const prompt = prompts[mode] || prompts.translate;
-  const system = prompt.system;
   const targetLanguage = getTargetLanguageName(language);
-  let user = applyTemplate(prompt.user, {
+  const templateVars = {
     text,
     meaning: options.meaning || "",
     context: options.context || "",
     target_language: targetLanguage
-  });
+  };
+  const system = applyTemplate(prompt.system, templateVars);
+  let user = applyTemplate(prompt.user, templateVars);
   const res = await fetch(`${LMSTUDIO_BASE}/v1/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

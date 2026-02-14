@@ -2,9 +2,13 @@ Word: {{text}}
 Context sentence: {{context}}
 
 Stage 1: output only meanings + POS. No examples.
+Output 1-3 common meanings (do not force 3; avoid rare/archaic).
 If a context sentence is provided, prioritize meanings that fit the context.
 Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
+Do NOT output labels like "Meaning in ...". Only output meanings.
 Use numbered lines; one meaning per line. No extra text.
 
 Format:
-1. Meaning in {{target_language}} (N.)
+1. <meaning in {{target_language}}> (N.)
+2. <meaning in {{target_language}}> (N.)
+3. <meaning in {{target_language}}> (N.)

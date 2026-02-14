@@ -15,13 +15,60 @@ const LANGUAGE_OPTIONS = [
   { value: "en", label: "英文" }
 ];
 const LANGUAGE_VALUES = new Set(LANGUAGE_OPTIONS.map((opt) => opt.value));
+const UI_LABELS = {
+  zh: {
+    toggle: "語言",
+    title: "翻譯語言",
+    fast: "快速翻譯",
+    translateBtn: "翻譯",
+    translationTitle: "翻譯",
+    play: "播放",
+    close: "關閉",
+    loading: "翻譯中...",
+    ttsGenerating: "生成中",
+    ttsFailed: "失敗"
+  },
+  ja: {
+    toggle: "言語",
+    title: "翻訳言語",
+    fast: "クイック翻訳",
+    translateBtn: "翻訳",
+    translationTitle: "翻訳",
+    play: "再生",
+    close: "閉じる",
+    loading: "翻訳中...",
+    ttsGenerating: "生成中",
+    ttsFailed: "失敗"
+  },
+  en: {
+    toggle: "Lang",
+    title: "Translation Language",
+    fast: "Fast Translate",
+    translateBtn: "Translate",
+    translationTitle: "Translation",
+    play: "Play",
+    close: "Close",
+    loading: "Translating...",
+    ttsGenerating: "Generating",
+    ttsFailed: "Failed"
+  }
+};
+const LANGUAGE_OPTION_LABELS = {
+  zh: { zh: "中文", ja: "日文", en: "英文" },
+  ja: { zh: "中国語", ja: "日本語", en: "英語" },
+  en: { zh: "Chinese", ja: "Japanese", en: "English" }
+};
 
 let currentLanguage = DEFAULT_LANGUAGE;
 let currentFastMode = DEFAULT_FAST_MODE;
 let settingsWidget;
 let settingsPanel;
+let settingsToggle;
+let settingsTitle;
 let settingsSelect;
 let fastModeToggle;
+let fastModeLabel;
+let settingsDragMoved = false;
 let ttsAudio;
 let ttsCacheKey = "";
 let ttsCacheUrl = "";
@@ -41,7 +88,7 @@ function ensureTranslateButton() {
 
   translateBtn = document.createElement("button");
   translateBtn.type = "button";
-  translateBtn.textContent = "翻譯";
+  translateBtn.textContent = getUiLabels().translateBtn;
   translateBtn.style.cssText = `
     position: fixed;
     z-index: 2147483647;
@@ -213,8 +260,9 @@ function showTranslation(original, translated, opts = {}) {
   const showPlay = isSingleWordText(original);
   const showOriginal = isSingleWordText(original);
   const headerTitle = showOriginal ? safeOriginal : "";
+  const labels = getUiLabels();
   const playButtonHtml = showPlay
-    ? `<button id="pt-play" aria-label="播放" style="cursor:pointer;border:none;border-radius:999px;padding:4px 10px;background:#ff6b3d;color:#fff;font-size:12px;box-shadow:0 6px 14px rgba(255,107,61,.35);">播放</button>`
+    ? `<button id="pt-play" aria-label="${labels.play}" style="cursor:pointer;border:none;border-radius:999px;padding:4px 10px;background:#ff6b3d;color:#fff;font-size:12px;box-shadow:0 6px 14px rgba(255,107,61,.35);">${labels.play}</button>`
     : "";
 
   container.innerHTML =
@@ -222,11 +270,11 @@ function showTranslation(original, translated, opts = {}) {
     `<div style="font-weight:700;white-space:normal;">${headerTitle}</div>` +
     `<div style="display:flex;gap:6px;align-items:center;">` +
     playButtonHtml +
-    `<button id="pt-close" aria-label="關閉" style="cursor:pointer;border:none;border-radius:999px;width:24px;height:24px;line-height:24px;text-align:center;background:rgba(255,107,61,.18);color:#ff6b3d;font-size:16px;">×</button>` +
+    `<button id="pt-close" aria-label="${labels.close}" style="cursor:pointer;border:none;border-radius:999px;width:24px;height:24px;line-height:24px;text-align:center;background:rgba(255,107,61,.18);color:#ff6b3d;font-size:16px;">×</button>` +
     `</div>` +
     `</div>` +
-    `<div style="opacity:.9;margin-bottom:6px;font-weight:700;color:#ff6b3d;">翻譯</div>` +
-    `<div style="background:rgba(26,26,26,.6);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.06);${isLoading ? "opacity:.7;font-style:italic;" : ""}">${safeTranslated || "翻譯中..."}</div>`;
+    `<div id="pt-translation-title" style="opacity:.9;margin-bottom:6px;font-weight:700;color:#ff6b3d;">${labels.translationTitle}</div>` +
+    `<div style="background:rgba(26,26,26,.6);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.06);${isLoading ? "opacity:.7;font-style:italic;" : ""}">${safeTranslated || labels.loading}</div>`;
 
   container.querySelector("#pt-close")?.addEventListener("click", () => {
     container.remove();
@@ -542,16 +590,19 @@ async function requestTtsPlayback(text, button) {
   if (!trimmed) return;
   if (ttsInFlight) return;
 
+  const labels = getUiLabels();
   const cacheKey = `${currentLanguage}::${trimmed}`;
   if (ttsCacheKey === cacheKey && ttsCacheUrl) {
     playAudioUrl(ttsCacheUrl);
     return;
   }
 
-  const originalLabel = button?.textContent || "播放";
+  const originalLabel =
+    button?.dataset?.label || button?.textContent || labels.play;
   ttsInFlight = true;
   if (button) {
-    button.textContent = "生成中";
+    button.dataset.label = labels.play;
+    button.textContent = labels.ttsGenerating;
     button.disabled = true;
   }
 
@@ -579,7 +630,7 @@ async function requestTtsPlayback(text, button) {
     }
   } catch (err) {
     console.warn("TTS failed:", err);
-    if (button) button.textContent = "失敗";
+    if (button) button.textContent = labels.ttsFailed;
     setTimeout(() => {
       if (button) button.textContent = originalLabel;
     }, 1200);
@@ -587,7 +638,9 @@ async function requestTtsPlayback(text, button) {
     ttsInFlight = false;
     if (button) {
       button.disabled = false;
-      if (button.textContent !== "失敗") button.textContent = originalLabel;
+      if (button.textContent !== labels.ttsFailed) {
+        button.textContent = originalLabel;
+      }
     }
   }
 }
@@ -625,6 +678,7 @@ function ensureSettingsWidget() {
   `;
 
   const toggle = document.createElement("button");
+  settingsToggle = toggle;
   toggle.type = "button";
   toggle.textContent = "語言";
   toggle.style.cssText = `
@@ -660,6 +714,7 @@ function ensureSettingsWidget() {
   `;
 
   const title = document.createElement("div");
+  settingsTitle = title;
   title.textContent = "翻譯語言";
   title.style.cssText =
     "font-weight: 700; font-size: 12px; margin-bottom: 8px; color: #ff6b3d;";
@@ -691,6 +746,7 @@ function ensureSettingsWidget() {
   fastModeToggle.style.cssText = "cursor:pointer; accent-color:#ff6b3d;";
 
   const fastLabel = document.createElement("span");
+  fastModeLabel = fastLabel;
   fastLabel.textContent = "快速翻譯";
 
   fastRow.appendChild(fastModeToggle);
@@ -705,6 +761,10 @@ function ensureSettingsWidget() {
 
   toggle.addEventListener("click", (e) => {
     e.preventDefault();
+    if (settingsDragMoved) {
+      settingsDragMoved = false;
+      return;
+    }
     settingsPanel.style.display =
       settingsPanel.style.display === "none" ? "block" : "none";
   });
@@ -712,6 +772,7 @@ function ensureSettingsWidget() {
   settingsSelect.addEventListener("change", () => {
     const nextLang = normalizeLanguage(settingsSelect.value);
     currentLanguage = nextLang;
+    updateSettingsPanelText();
     saveLanguageSetting(nextLang);
   });
 
@@ -731,6 +792,8 @@ function ensureSettingsWidget() {
     true
   );
 
+  enableSettingsDrag(toggle, settingsWidget);
+  updateSettingsPanelText();
   return settingsWidget;
 }
 
@@ -794,6 +857,82 @@ async function initLanguageSettings() {
 
   if (settingsSelect) settingsSelect.value = currentLanguage;
   if (fastModeToggle) fastModeToggle.checked = currentFastMode;
+  updateSettingsPanelText();
   notifyLanguage(currentLanguage);
   notifyFastMode(currentFastMode);
+}
+
+function updateSettingsPanelText() {
+  const lang = normalizeLanguage(currentLanguage);
+  const labels = UI_LABELS[lang] || UI_LABELS[DEFAULT_LANGUAGE];
+  const optionLabels =
+    LANGUAGE_OPTION_LABELS[lang] || LANGUAGE_OPTION_LABELS[DEFAULT_LANGUAGE];
+
+  if (settingsToggle) settingsToggle.textContent = labels.toggle;
+  if (settingsTitle) settingsTitle.textContent = labels.title;
+  if (fastModeLabel) fastModeLabel.textContent = labels.fast;
+  if (translateBtn) translateBtn.textContent = labels.translateBtn;
+
+  if (settingsSelect && optionLabels) {
+    Array.from(settingsSelect.options).forEach((opt) => {
+      const nextLabel = optionLabels[opt.value];
+      if (nextLabel) opt.textContent = nextLabel;
+    });
+  }
+
+  if (box) {
+    const titleEl = box.querySelector("#pt-translation-title");
+    if (titleEl) titleEl.textContent = labels.translationTitle;
+    const closeBtn = box.querySelector("#pt-close");
+    if (closeBtn) closeBtn.setAttribute("aria-label", labels.close);
+    const playBtn = box.querySelector("#pt-play");
+    if (playBtn) {
+      playBtn.dataset.label = labels.play;
+      if (!playBtn.disabled) playBtn.textContent = labels.play;
+    }
+  }
+}
+
+function getUiLabels() {
+  const lang = normalizeLanguage(currentLanguage);
+  return UI_LABELS[lang] || UI_LABELS[DEFAULT_LANGUAGE];
+}
+
+function enableSettingsDrag(handle, target) {
+  if (!handle || !target) return;
+
+  handle.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+
+    const rect = target.getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+    let moved = false;
+
+    const onMove = (ev) => {
+      if (!moved) {
+        const delta = Math.abs(ev.clientY - e.clientY);
+        if (delta < 3) return;
+        moved = true;
+      }
+
+      const nextTop = clamp(
+        ev.clientY - offsetY,
+        BOX_MARGIN,
+        window.innerHeight - rect.height - BOX_MARGIN
+      );
+      target.style.top = `${nextTop}px`;
+      target.style.transform = "translateY(0)";
+    };
+
+    const onUp = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+      settingsDragMoved = moved;
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  });
 }

@@ -49,11 +49,11 @@ function ensureTranslateButton() {
     padding: 6px 10px;
     border: none;
     border-radius: 999px;
-    background: #111;
+    background: #ff6b3d;
     color: #fff;
     font-size: 12px;
     line-height: 1;
-    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    box-shadow: 0 8px 18px rgba(255,107,61,.35);
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   `;
@@ -183,11 +183,14 @@ function ensureBox() {
     max-height: 55vh;
     overflow: auto;
     z-index: 2147483647;
-    background: #111;
-    color: #fff;
+    background: rgba(46, 46, 46, 0.72);
+    color: #f5f5f5;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
     padding: 12px 12px 10px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    box-shadow: 0 12px 30px rgba(0,0,0,.35);
     font-size: 13px;
     line-height: 1.4;
     white-space: pre-wrap;
@@ -208,7 +211,7 @@ function showTranslation(original, translated, opts = {}) {
   const showOriginal = isSingleWordText(original);
   const headerTitle = showOriginal ? safeOriginal : "";
   const playButtonHtml = showPlay
-    ? `<button id="pt-play" aria-label="播放" style="cursor:pointer;border:none;border-radius:999px;padding:4px 10px;background:#1d1d1d;color:#fff;font-size:12px;">播放</button>`
+    ? `<button id="pt-play" aria-label="播放" style="cursor:pointer;border:none;border-radius:999px;padding:4px 10px;background:#ff6b3d;color:#fff;font-size:12px;box-shadow:0 6px 14px rgba(255,107,61,.35);">播放</button>`
     : "";
 
   container.innerHTML =
@@ -216,11 +219,11 @@ function showTranslation(original, translated, opts = {}) {
     `<div style="font-weight:700;white-space:normal;">${headerTitle}</div>` +
     `<div style="display:flex;gap:6px;align-items:center;">` +
     playButtonHtml +
-    `<button id="pt-close" aria-label="關閉" style="cursor:pointer;border:none;border-radius:999px;width:24px;height:24px;line-height:24px;text-align:center;background:#1d1d1d;color:#fff;font-size:16px;">×</button>` +
+    `<button id="pt-close" aria-label="關閉" style="cursor:pointer;border:none;border-radius:999px;width:24px;height:24px;line-height:24px;text-align:center;background:rgba(255,107,61,.18);color:#ff6b3d;font-size:16px;">×</button>` +
     `</div>` +
     `</div>` +
-    `<div style="opacity:.85;margin-bottom:6px;font-weight:600;">翻譯</div>` +
-    `<div style="background:#1d1d1d;padding:8px;border-radius:10px;${isLoading ? "opacity:.7;font-style:italic;" : ""}">${safeTranslated || "翻譯中..."}</div>`;
+    `<div style="opacity:.9;margin-bottom:6px;font-weight:700;color:#ff6b3d;">翻譯</div>` +
+    `<div style="background:rgba(26,26,26,.6);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.06);${isLoading ? "opacity:.7;font-style:italic;" : ""}">${safeTranslated || "翻譯中..."}</div>`;
 
   container.querySelector("#pt-close")?.addEventListener("click", () => {
     container.remove();
@@ -627,8 +630,11 @@ function ensureSettingsWidget() {
     padding: 10px 6px;
     border: none;
     border-radius: 999px;
-    background: #111;
-    color: #fff;
+    background: rgba(46, 46, 46, 0.75);
+    color: #f5f5f5;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
     font-size: 12px;
     line-height: 1;
     box-shadow: 0 8px 20px rgba(0,0,0,.3);
@@ -639,8 +645,11 @@ function ensureSettingsWidget() {
   settingsPanel.style.cssText = `
     display: none;
     margin-top: 8px;
-    background: #111;
-    color: #fff;
+    background: rgba(46, 46, 46, 0.72);
+    color: #f5f5f5;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
     padding: 10px 12px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,.35);
@@ -649,16 +658,17 @@ function ensureSettingsWidget() {
 
   const title = document.createElement("div");
   title.textContent = "翻譯語言";
-  title.style.cssText = "font-weight: 700; font-size: 12px; margin-bottom: 8px;";
+  title.style.cssText =
+    "font-weight: 700; font-size: 12px; margin-bottom: 8px; color: #ff6b3d;";
 
   settingsSelect = document.createElement("select");
   settingsSelect.style.cssText = `
     width: 100%;
     padding: 6px 8px;
     border-radius: 8px;
-    border: 1px solid #2a2a2a;
-    background: #1d1d1d;
-    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(26, 26, 26, 0.7);
+    color: #f5f5f5;
     font-size: 12px;
   `;
 
@@ -675,7 +685,7 @@ function ensureSettingsWidget() {
 
   fastModeToggle = document.createElement("input");
   fastModeToggle.type = "checkbox";
-  fastModeToggle.style.cssText = "cursor:pointer;";
+  fastModeToggle.style.cssText = "cursor:pointer; accent-color:#ff6b3d;";
 
   const fastLabel = document.createElement("span");
   fastLabel.textContent = "快速翻譯";

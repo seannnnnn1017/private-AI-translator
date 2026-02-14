@@ -8,6 +8,7 @@ A lightweight Firefox extension that translates selected text using a local LM S
 - Draggable floating translation panel with close + play buttons
 - Language selector (中文 / 日文 / 英文)
 - Fast translate mode toggle
+- Context-aware single-word translation (uses the surrounding sentence to disambiguate)
 - Local prompts you can edit
 - Optional local TTS via `pyttsx3`
 
@@ -67,6 +68,11 @@ Prompts are plain text files under `prompts/`.
   - `prompts/word_user.txt` (Japanese)
   - `prompts/word_system_en.txt`
   - `prompts/word_user_en.txt`
+- Two-stage word prompts:
+  - Meanings only: `prompts/word_meaning_zh.txt`, `prompts/word_meaning_ja.txt`, `prompts/word_meaning_en.txt`
+  - Examples only: `prompts/word_example_zh.txt`, `prompts/word_example_ja.txt`, `prompts/word_example_en.txt`
+- Fast word prompts (context-aware):
+  - `prompts/word_fast_zh.txt`, `prompts/word_fast_ja.txt`, `prompts/word_fast_en.txt`
 
 After editing prompts, reload the extension.
 
@@ -74,8 +80,18 @@ After editing prompts, reload the extension.
 
 When **快速翻譯** is enabled:
 
-- All selections use the translation prompt
-- If the selection is a single word, the prompt adds one example sentence + translation
+- Sentences use the translation prompt
+- Single words use a dedicated fast word prompt and include:
+  - The word meaning (best fit for the context sentence)
+  - One example sentence (with **bold** word) + translation
+
+## Word Mode (Default for Single Word)
+
+When **快速翻譯** is disabled and you select a single word:
+
+- Stage 1: get meanings + POS only (fast)
+- Stage 2: generate one example sentence per meaning
+- The context sentence is passed to Stage 1 to improve accuracy
 
 ## TTS Notes
 

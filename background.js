@@ -299,6 +299,65 @@ function parseNumberedBlocks(text) {
   return blocks;
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function boldWordInLine(line, word) {
+  if (!line || !word) return line;
+  if (line.includes("**")) return line;
+
+  const target = String(word).trim();
+  if (!target) return line;
+
+  const escaped = escapeRegExp(target);
+  try {
+    const unicodeRe = new RegExp(
+      `(^|[^\\p{L}\\p{N}])(${escaped})(?=[^\\p{L}\\p{N}]|$)`,
+      "iu"
+    );
+    if (unicodeRe.test(line)) {
+      return line.replace(unicodeRe, "$1**$2**");
+    }
+  } catch (err) {
+    // fall back to ASCII boundary
+  }
+
+  const asciiRe = new RegExp(`(^|[^A-Za-z0-9])(${escaped})(?=[^A-Za-z0-9]|$)`, "i");
+  if (asciiRe.test(line)) {
+    return line.replace(asciiRe, "$1**$2**");
+  }
+
+  return line;
+}
+
+function highlightExampleText(exampleText, word) {
+  const blocks = parseNumberedBlocks(exampleText);
+  if (!blocks.length) return exampleText;
+
+  return blocks
+    .map((block) => {
+      const line = boldWordInLine(block.line, word);
+      const lines = [`${block.num}. ${line}`];
+      if (block.extra.length) lines.push(...block.extra);
+      return lines.join("\n");
+    })
+    .join("\n");
+}
+
+function highlightFastOutput(text, word) {
+  const lines = String(text || "").split(/\r?\n/);
+  const nonEmpty = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].trim()) nonEmpty.push(i);
+  }
+  if (nonEmpty.length >= 2) {
+    const idx = nonEmpty[1];
+    lines[idx] = boldWordInLine(lines[idx], word);
+  }
+  return lines.join("\n");
+}
+
 function limitMeaningList(text, maxItems = 3) {
   const blocks = parseNumberedBlocks(text);
   if (blocks.length) {
@@ -383,12 +442,13 @@ async function sendWordTwoStage(
   }
 
   try {
-    const examples = await translateWithLMStudio(
+    const rawExamples = await translateWithLMStudio(
       promptText,
       "wordExample",
       language,
       { meaning }
     );
+    const examples = highlightExampleText(rawExamples, promptText);
 
     const combined = mergeMeaningAndExamples(meaning, examples);
     if (tabId != null) {
@@ -454,10 +514,14 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
       currentLanguage,
       { context }
     );
+    const resultText =
+      mode === "wordFast" && isWord
+        ? highlightFastOutput(translated, promptText)
+        : translated;
     browser.tabs.sendMessage(tab.id, {
       type: "SHOW_TRANSLATION",
       original: text,
-      translated
+      translated: resultText
     });
   } catch (err) {
     browser.tabs.sendMessage(tab.id, {
@@ -536,11 +600,15 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         language,
         { context }
       );
+      const resultText =
+        mode === "wordFast" && isWord
+          ? highlightFastOutput(translated, promptText)
+          : translated;
       if (tabId != null) {
         browser.tabs.sendMessage(tabId, {
           type: "SHOW_TRANSLATION",
           original: text,
-          translated
+          translated: resultText
         });
       }
     } catch (err) {

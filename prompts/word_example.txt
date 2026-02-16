@@ -2,12 +2,13 @@ Word: {{text}}
 Meanings:
 {{meaning}}
 
-For each meaning (same order), write one IELTS-style English example sentence with **word**, and a translation in {{target_language}}.
+For each meaning (same order), write one IELTS-style English example sentence and a translation in {{target_language}}.
 Do NOT output labels like "English example" or "Translation in ...".
+Do NOT add any Markdown bold to the example sentence. Bold will be added later by code.
 Output only the example section:
-1. <English example sentence with **word**>
+1. <English example sentence>
    <Translation in {{target_language}}>
-2. <English example sentence with **word**>
+2. <English example sentence>
    <Translation in {{target_language}}>
-3. <English example sentence with **word**>
+3. <English example sentence>
    <Translation in {{target_language}}>

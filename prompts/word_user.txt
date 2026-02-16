@@ -5,11 +5,11 @@ Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
 Do NOT output labels like "Meaning in ..." or "Translation in ...".
 Each sense:
 1. **<meaning in {{target_language}}>** (N.)
-   <IELTS-style English example with **word**>
+   <IELTS-style English example>
    <Translation in {{target_language}}>
 2. **<meaning in {{target_language}}>** (N.)
-   <IELTS-style English example with **word**>
+   <IELTS-style English example>
    <Translation in {{target_language}}>
 3. **<meaning in {{target_language}}>** (N.)
-   <IELTS-style English example with **word**>
+   <IELTS-style English example>
    <Translation in {{target_language}}>

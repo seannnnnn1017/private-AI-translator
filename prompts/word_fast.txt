@@ -3,10 +3,11 @@ Context sentence: {{context}}
 
 Translate only the target word (do not translate the whole sentence). Choose the meaning that best fits the context.
 Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
-Add one English example sentence with **word** and a translation in {{target_language}}.
-Do NOT output labels like "Meaning in ..." or "English example sentence with word" or "Translation in ...".
+Add one English example sentence and a translation in {{target_language}}.
+Do NOT output labels like "Meaning in ..." or "English example sentence" or "Translation in ...".
+Do NOT add any Markdown bold to the example sentence. Bold will be added later by code.
 Output exactly three lines in this order:
 
 1) **<meaning in {{target_language}}>** (N.)
-2) <English example sentence with **word**>
+2) <English example sentence>
 3) <Translation in {{target_language}}>

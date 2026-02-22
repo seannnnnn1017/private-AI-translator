@@ -1,6 +1,6 @@
-# Private AI Translator (Firefox)
+# Private AI Translator (Firefox + Chrome)
 
-A lightweight Firefox extension that translates selected text using a local LM Studio model. It adds a small translate button near your selection, shows a draggable floating translation panel, and can play the original text via local `pyttsx3` TTS.
+A lightweight Firefox/Chrome extension that translates selected text using a local LM Studio model. It adds a small translate button near your selection, shows a draggable floating translation panel, and can play the original text via local `pyttsx3` TTS.
 
 ## Features
 
@@ -14,7 +14,7 @@ A lightweight Firefox extension that translates selected text using a local LM S
 
 ## Requirements
 
-- Firefox
+- Firefox (109+) or Chrome (Chromium-based, MV3)
 - LM Studio running locally at `http://127.0.0.1:1234`
 - A chat model available in LM Studio (configure in `background.js`)
 - Python 3 + `pyttsx3` (for TTS)
@@ -35,7 +35,14 @@ const MODEL = "qwen/qwen3-8b";
 - Click **Load Temporary Add-on...**
 - Select `manifest.json`
 
-4. (Optional) Start TTS server:
+4. Load the extension in Chrome:
+
+- Open `chrome://extensions`
+- Enable **Developer mode**
+- Click **Load unpacked**
+- Select this folder (the one with `manifest.json`)
+
+5. (Optional) Start TTS server:
 
 ```bash
 pip install pyttsx3

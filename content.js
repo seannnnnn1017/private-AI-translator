@@ -1,3 +1,54 @@
+const ext = typeof browser !== "undefined" ? browser : chrome;
+
+function asPromise(result, fallback) {
+  return result && typeof result.then === "function" ? result : fallback();
+}
+
+function storageGet(keys) {
+  try {
+    return asPromise(ext.storage.local.get(keys), () =>
+      new Promise((resolve, reject) => {
+        ext.storage.local.get(keys, (res) => {
+          const err = ext.runtime?.lastError;
+          err ? reject(err) : resolve(res);
+        });
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+function storageSet(payload) {
+  try {
+    return asPromise(ext.storage.local.set(payload), () =>
+      new Promise((resolve, reject) => {
+        ext.storage.local.set(payload, () => {
+          const err = ext.runtime?.lastError;
+          err ? reject(err) : resolve();
+        });
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+function sendMessage(msg) {
+  try {
+    return asPromise(ext.runtime.sendMessage(msg), () =>
+      new Promise((resolve, reject) => {
+        ext.runtime.sendMessage(msg, (res) => {
+          const err = ext.runtime?.lastError;
+          err ? reject(err) : resolve(res);
+        });
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
 let box;
 let translateBtn;
 let lastSelectionText = "";
@@ -77,7 +128,7 @@ let lastSelectionRect = null;
 let lastRequestRect = null;
 let lastSelectionLineRect = null;
 
-browser.runtime.onMessage.addListener((msg) => {
+ext.runtime.onMessage.addListener((msg) => {
   if (msg?.type !== "SHOW_TRANSLATION") return;
   const { original, translated } = msg;
   showTranslation(original, translated);
@@ -122,7 +173,7 @@ function ensureTranslateButton() {
     const context = getSelectionContextText(text);
     if (!text) return;
     showTranslation(text, "翻譯中...", { loading: true });
-    browser.runtime.sendMessage({
+    sendMessage({
       type: "TRANSLATE_TEXT",
       text,
       context,
@@ -607,7 +658,7 @@ async function requestTtsPlayback(text, button) {
   }
 
   try {
-    const result = await browser.runtime.sendMessage({
+    const result = await sendMessage({
       type: "SPEAK_TEXT",
       text: trimmed,
       language: currentLanguage
@@ -799,7 +850,7 @@ function ensureSettingsWidget() {
 
 function notifyLanguage(lang) {
   try {
-    browser.runtime.sendMessage({
+    sendMessage({
       type: "SET_LANGUAGE",
       language: lang
     });
@@ -810,7 +861,7 @@ function notifyLanguage(lang) {
 
 function notifyFastMode(enabled) {
   try {
-    browser.runtime.sendMessage({
+    sendMessage({
       type: "SET_FAST_MODE",
       enabled: Boolean(enabled)
     });
@@ -821,7 +872,7 @@ function notifyFastMode(enabled) {
 
 async function saveLanguageSetting(lang) {
   try {
-    await browser.storage.local.set({ [SETTINGS_KEY]: lang });
+    await storageSet({ [SETTINGS_KEY]: lang });
   } catch (err) {
     // ignore
   }
@@ -830,7 +881,7 @@ async function saveLanguageSetting(lang) {
 
 async function saveFastModeSetting(enabled) {
   try {
-    await browser.storage.local.set({ [SETTINGS_FAST_KEY]: Boolean(enabled) });
+    await storageSet({ [SETTINGS_FAST_KEY]: Boolean(enabled) });
   } catch (err) {
     // ignore
   }
@@ -840,7 +891,7 @@ async function saveFastModeSetting(enabled) {
 async function initLanguageSettings() {
   ensureSettingsWidget();
   try {
-    const stored = await browser.storage.local.get([
+    const stored = await storageGet([
       SETTINGS_KEY,
       SETTINGS_FAST_KEY
     ]);

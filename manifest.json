@@ -1,12 +1,10 @@
 {
-  "manifest_version": 2,
-  "name": "Private Translator (LM Studio) - Firefox",
+  "manifest_version": 3,
+  "name": "Private Translator (LM Studio)",
   "version": "0.0.1",
   "description": "Translate selected text using local LM Studio.",
-  "permissions": [
-    "contextMenus",
-    "activeTab",
-    "storage",
+  "permissions": ["contextMenus", "activeTab", "storage"],
+  "host_permissions": [
     "<all_urls>",
     "http://127.0.0.1:1234/*",
     "http://localhost:1234/*",
@@ -14,7 +12,7 @@
     "http://localhost:5005/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {

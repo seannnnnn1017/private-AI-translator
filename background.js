@@ -1,3 +1,39 @@
+const ext = typeof browser !== "undefined" ? browser : chrome;
+
+function asPromise(result, fallback) {
+  return result && typeof result.then === "function" ? result : fallback();
+}
+
+function storageGet(keys) {
+  try {
+    return asPromise(ext.storage.local.get(keys), () =>
+      new Promise((resolve, reject) => {
+        ext.storage.local.get(keys, (res) => {
+          const err = ext.runtime?.lastError;
+          err ? reject(err) : resolve(res);
+        });
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+function storageSet(payload) {
+  try {
+    return asPromise(ext.storage.local.set(payload), () =>
+      new Promise((resolve, reject) => {
+        ext.storage.local.set(payload, () => {
+          const err = ext.runtime?.lastError;
+          err ? reject(err) : resolve();
+        });
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
 const LMSTUDIO_BASE = "http://127.0.0.1:1234";
 const MODEL = "qwen/qwen3-8b"; // 改成 LM Studio 的 model 名稱
 
@@ -141,7 +177,7 @@ function getTargetLanguageName(lang) {
 
 async function loadSettings() {
   try {
-    const stored = await browser.storage.local.get([
+    const stored = await storageGet([
       SETTINGS_KEY,
       SETTINGS_FAST_KEY
     ]);
@@ -167,7 +203,7 @@ async function setLanguage(lang) {
   const nextLang = normalizeLanguage(lang);
   currentLanguage = nextLang;
   try {
-    await browser.storage.local.set({ [SETTINGS_KEY]: nextLang });
+    await storageSet({ [SETTINGS_KEY]: nextLang });
   } catch (err) {
     // ignore
   }
@@ -178,7 +214,7 @@ async function setFastMode(enabled) {
   const nextValue = Boolean(enabled);
   currentFastMode = nextValue;
   try {
-    await browser.storage.local.set({ [SETTINGS_FAST_KEY]: nextValue });
+    await storageSet({ [SETTINGS_FAST_KEY]: nextValue });
   } catch (err) {
     // ignore
   }
@@ -222,7 +258,7 @@ async function synthesizeSpeech(text, language) {
 
 async function loadPromptFile(path, fallback) {
   try {
-    const res = await fetch(browser.runtime.getURL(path));
+    const res = await fetch(ext.runtime.getURL(path));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     return text.trim() || fallback;
@@ -434,7 +470,7 @@ async function sendWordTwoStage(
   const meaning = limitMeaningList(rawMeaning, 3);
 
   if (tabId != null) {
-    browser.tabs.sendMessage(tabId, {
+    ext.tabs.sendMessage(tabId, {
       type: "SHOW_TRANSLATION",
       original: originalText,
       translated: meaning
@@ -452,7 +488,7 @@ async function sendWordTwoStage(
 
     const combined = mergeMeaningAndExamples(meaning, examples);
     if (tabId != null) {
-      browser.tabs.sendMessage(tabId, {
+      ext.tabs.sendMessage(tabId, {
         type: "SHOW_TRANSLATION",
         original: originalText,
         translated: combined
@@ -460,7 +496,7 @@ async function sendWordTwoStage(
     }
   } catch (err) {
     if (tabId != null) {
-      browser.tabs.sendMessage(tabId, {
+      ext.tabs.sendMessage(tabId, {
         type: "SHOW_TRANSLATION",
         original: originalText,
         translated: `${meaning}\n\n（例句生成失敗）`
@@ -471,15 +507,15 @@ async function sendWordTwoStage(
 
 ensureSettingsLoaded();
 
-browser.runtime.onInstalled.addListener(() => {
-  browser.contextMenus.create({
+ext.runtime.onInstalled.addListener(() => {
+  ext.contextMenus.create({
     id: "translate-selection",
     title: "翻譯選取文字（本地 LLM）",
     contexts: ["selection"]
   });
 });
 
-browser.contextMenus.onClicked.addListener(async (info, tab) => {
+ext.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "translate-selection") return;
 
   const text = info.selectionText || "";
@@ -518,13 +554,13 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
       mode === "wordFast" && isWord
         ? highlightFastOutput(translated, promptText)
         : translated;
-    browser.tabs.sendMessage(tab.id, {
+    ext.tabs.sendMessage(tab.id, {
       type: "SHOW_TRANSLATION",
       original: text,
       translated: resultText
     });
   } catch (err) {
-    browser.tabs.sendMessage(tab.id, {
+    ext.tabs.sendMessage(tab.id, {
       type: "SHOW_TRANSLATION",
       original: text,
       translated: `（翻譯失敗）${String(err?.message || err)}`
@@ -532,7 +568,7 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === "SET_LANGUAGE") {
     return setLanguage(msg.language);
   }
@@ -605,7 +641,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           ? highlightFastOutput(translated, promptText)
           : translated;
       if (tabId != null) {
-        browser.tabs.sendMessage(tabId, {
+        ext.tabs.sendMessage(tabId, {
           type: "SHOW_TRANSLATION",
           original: text,
           translated: resultText
@@ -613,7 +649,7 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
     } catch (err) {
       if (tabId != null) {
-        browser.tabs.sendMessage(tabId, {
+        ext.tabs.sendMessage(tabId, {
           type: "SHOW_TRANSLATION",
           original: text,
           translated: `（翻譯失敗）${String(err?.message || err)}`

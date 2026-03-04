@@ -1,6 +1,6 @@
 # Private AI Translator (Firefox + Chrome)
 
-A lightweight Firefox/Chrome extension that translates selected text using a local LM Studio model. It adds a small translate button near your selection, shows a draggable floating translation panel, and can play the original text via local `pyttsx3` TTS.
+A lightweight Firefox/Chrome extension that translates selected text using local or remote LLM APIs. It adds a small translate button near your selection, shows a draggable floating translation panel, and can play the original text via local `pyttsx3` TTS.
 
 ## Features
 
@@ -8,6 +8,9 @@ A lightweight Firefox/Chrome extension that translates selected text using a loc
 - Draggable floating translation panel with close + play buttons
 - Language selector (中文 / 日文 / 英文)
 - Fast translate mode toggle
+- Configurable model API provider (LM Studio, OpenAI, Gemini, custom OpenAI-compatible API)
+- Quick English helper chat with `Command + /`
+- Selection-aware chat questions (the next chat message can refer to your highlighted text)
 - Context-aware single-word translation (uses the surrounding sentence to disambiguate)
 - Local prompts you can edit
 - Optional local TTS via `pyttsx3`
@@ -15,20 +18,16 @@ A lightweight Firefox/Chrome extension that translates selected text using a loc
 ## Requirements
 
 - Firefox (109+) or Chrome (Chromium-based, MV3)
-- LM Studio running locally at `http://127.0.0.1:1234`
-- A chat model available in LM Studio (configure in `background.js`)
+- One translation backend:
+  - LM Studio running locally
+  - OpenAI API key
+  - Google Gemini API key
+  - A self-hosted OpenAI-compatible API server
 - Python 3 + `pyttsx3` (for TTS)
 
 ## Setup
 
-1. Start LM Studio and load your model.
-2. Update the model name in `background.js` if needed:
-
-```js
-const MODEL = "qwen/qwen3-8b";
-```
-
-3. Pick the browser manifest (this copies the right file into `manifest.json`):
+1. Pick the browser manifest (this copies the right file into `manifest.json`):
 
 ```bash
 ./use-manifest.sh firefox
@@ -36,21 +35,28 @@ const MODEL = "qwen/qwen3-8b";
 
 Use `./use-manifest.sh chrome` before loading in Chrome.
 
-4. Load the extension in Firefox:
+2. Load the extension in Firefox:
 
 - Open `about:debugging`
 - Click **This Firefox**
 - Click **Load Temporary Add-on...**
 - Select `manifest.json`
 
-5. Load the extension in Chrome:
+3. Load the extension in Chrome:
 
 - Open `chrome://extensions`
 - Enable **Developer mode**
 - Click **Load unpacked**
 - Select this folder (the one with `manifest.json`)
 
-6. (Optional) Start TTS server:
+4. Open the extension settings panel on any page and choose your provider:
+
+- `LM Studio`: local OpenAI-compatible endpoint, default `http://127.0.0.1:1234`
+- `OpenAI / GPT`: set your OpenAI API key and model
+- `Google Gemini`: set your Gemini API key and model
+- `Custom API`: your own OpenAI-compatible server URL, model, and optional key
+
+5. (Optional) Start TTS server:
 
 ```bash
 pip install pyttsx3
@@ -63,7 +69,11 @@ python3 tts_server.py
 - Click the small **翻譯** button near the selection.
 - The floating panel shows the translation. You can drag or close it.
 - Click **播放** to speak the original text (requires TTS server).
-- Use the right-side settings panel to choose language and toggle fast mode.
+- Use the right-side settings panel to choose language, toggle fast mode, and configure the API provider/base URL/model/key.
+- Press `Command + /` to toggle the quick English chat UI near the lower center of the page.
+- Press `Enter` to turn that quick input into a draggable chat panel with in-page history until the page reloads.
+- If you highlight text before pressing `Command + /`, your next chat question can refer to that selection (for example, “how do I use this word?”).
+- In the chat header, `-` hides the panel but keeps history, while `×` clears history and fully closes it.
 
 ## Prompts
 
@@ -80,6 +90,9 @@ Prompts are plain text files under `prompts/`. All prompts are written in Englis
   - Examples only: `prompts/word_example.txt`
 - Fast word prompt (context-aware):
   - `prompts/word_fast.txt`
+- English helper chat prompts:
+  - `prompts/chat_system.txt`
+  - `prompts/chat_user.txt`
 
 After editing prompts, reload the extension.
 
@@ -108,15 +121,18 @@ When **快速翻譯** is disabled and you select a single word:
 
 ## Troubleshooting
 
-- No translation: verify LM Studio is running and `MODEL` is correct.
+- No translation:
+  - `LM Studio`: verify LM Studio is running and the base URL/model are correct.
+  - `OpenAI / Gemini`: verify the API key is valid and the selected model is available.
+  - `Custom API`: verify the server is OpenAI-compatible and reachable from the browser.
 - No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
 - Changes not applied: reload the extension in `about:debugging`.
 - Firefox install error about `background.service_worker`: run `./use-manifest.sh firefox` and reload the temporary add-on.
 
 ## Files
 
-- `content.js`: selection UI, floating panel, settings UI, TTS button
-- `background.js`: LM Studio request, prompt loading, language/fast mode, TTS request
+- `content.js`: selection UI, floating panels, quick chat UI, settings UI, TTS button
+- `background.js`: provider-aware translation and chat requests, prompt loading, settings state, TTS request
 - `tts_server.py`: local pyttsx3 TTS server
 - `manifest.firefox.json`: Firefox manifest (`background.scripts`)
 - `manifest.chrome.json`: Chrome manifest (`background.service_worker`)

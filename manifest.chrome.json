@@ -12,17 +12,12 @@
     "http://localhost:5005/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "private-translator@example.com"
-    }
-  }
+  ]
 }

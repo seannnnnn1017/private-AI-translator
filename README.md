@@ -28,21 +28,29 @@ A lightweight Firefox/Chrome extension that translates selected text using a loc
 const MODEL = "qwen/qwen3-8b";
 ```
 
-3. Load the extension in Firefox:
+3. Pick the browser manifest (this copies the right file into `manifest.json`):
+
+```bash
+./use-manifest.sh firefox
+```
+
+Use `./use-manifest.sh chrome` before loading in Chrome.
+
+4. Load the extension in Firefox:
 
 - Open `about:debugging`
 - Click **This Firefox**
 - Click **Load Temporary Add-on...**
 - Select `manifest.json`
 
-4. Load the extension in Chrome:
+5. Load the extension in Chrome:
 
 - Open `chrome://extensions`
 - Enable **Developer mode**
 - Click **Load unpacked**
 - Select this folder (the one with `manifest.json`)
 
-5. (Optional) Start TTS server:
+6. (Optional) Start TTS server:
 
 ```bash
 pip install pyttsx3
@@ -103,10 +111,14 @@ When **快速翻譯** is disabled and you select a single word:
 - No translation: verify LM Studio is running and `MODEL` is correct.
 - No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
 - Changes not applied: reload the extension in `about:debugging`.
+- Firefox install error about `background.service_worker`: run `./use-manifest.sh firefox` and reload the temporary add-on.
 
 ## Files
 
 - `content.js`: selection UI, floating panel, settings UI, TTS button
 - `background.js`: LM Studio request, prompt loading, language/fast mode, TTS request
 - `tts_server.py`: local pyttsx3 TTS server
-- `manifest.json`: extension manifest
+- `manifest.firefox.json`: Firefox manifest (`background.scripts`)
+- `manifest.chrome.json`: Chrome manifest (`background.service_worker`)
+- `manifest.json`: active manifest used when loading the extension
+- `use-manifest.sh`: copies the selected browser manifest into `manifest.json`

@@ -9,7 +9,9 @@ A lightweight Firefox/Chrome extension that translates selected text using local
 - Language selector (中文 / 日文 / 英文)
 - Fast translate mode toggle
 - Configurable model API provider (LM Studio, OpenAI, Gemini, custom OpenAI-compatible API)
-- Quick English helper chat with `Command + /`
+- Quick English helper chat with `Command + /` (toggle open/close)
+- Draggable and resizable chat panel with in-page history
+- Markdown-rendered chat replies (headings, lists, dividers, tables, code blocks)
 - Selection-aware chat questions (the next chat message can refer to your highlighted text)
 - Context-aware single-word translation (uses the surrounding sentence to disambiguate)
 - Local prompts you can edit
@@ -70,10 +72,14 @@ python3 tts_server.py
 - The floating panel shows the translation. You can drag or close it.
 - Click **播放** to speak the original text (requires TTS server).
 - Use the right-side settings panel to choose language, toggle fast mode, and configure the API provider/base URL/model/key.
-- Press `Command + /` to toggle the quick English chat UI near the lower center of the page.
-- Press `Enter` to turn that quick input into a draggable chat panel with in-page history until the page reloads.
+- Press `Command + /` to toggle the English chat UI.
+- On the first open (with no history), a quick input appears near the lower center of the page.
+- Press `Enter` in that quick input to open the full chat panel.
+- Once history exists, `Command + /` toggles the full chat panel directly.
 - If you highlight text before pressing `Command + /`, your next chat question can refer to that selection (for example, “how do I use this word?”).
+- Drag the chat header to move it, and drag the bottom-right `◢` handle to resize it.
 - In the chat header, `-` hides the panel but keeps history, while `×` clears history and fully closes it.
+- Chat replies render Markdown, including tables and `---` dividers.
 
 ## Prompts
 
@@ -125,13 +131,16 @@ When **快速翻譯** is disabled and you select a single word:
   - `LM Studio`: verify LM Studio is running and the base URL/model are correct.
   - `OpenAI / Gemini`: verify the API key is valid and the selected model is available.
   - `Custom API`: verify the server is OpenAI-compatible and reachable from the browser.
+- Chat table not rendering:
+  - Make sure the reply uses a normal Markdown table, not a fenced code block.
+  - Reload the extension after updating `content.js` or prompt files.
 - No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
 - Changes not applied: reload the extension in `about:debugging`.
 - Firefox install error about `background.service_worker`: run `./use-manifest.sh firefox` and reload the temporary add-on.
 
 ## Files
 
-- `content.js`: selection UI, floating panels, quick chat UI, settings UI, TTS button
+- `content.js`: selection UI, floating panels, quick chat UI, Markdown chat rendering, settings UI, TTS button
 - `background.js`: provider-aware translation and chat requests, prompt loading, settings state, TTS request
 - `tts_server.py`: local pyttsx3 TTS server
 - `manifest.firefox.json`: Firefox manifest (`background.scripts`)

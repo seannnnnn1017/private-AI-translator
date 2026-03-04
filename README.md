@@ -135,8 +135,11 @@ When **快速翻譯** is disabled and you select a single word:
   - Make sure the reply uses a normal Markdown table, not a fenced code block.
   - Reload the extension after updating `content.js` or prompt files.
 - No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
-- Changes not applied: reload the extension in `about:debugging`.
+- Changes not applied: reload the extension in `about:debugging` or `chrome://extensions`.
 - Firefox install error about `background.service_worker`: run `./use-manifest.sh firefox` and reload the temporary add-on.
+- `Could not establish connection. Receiving end does not exist.`:
+  - In Chrome, make sure you loaded the Chrome manifest (`manifest.json` now defaults to Chrome settings).
+  - In Firefox, run `./use-manifest.sh firefox`, then reload the temporary add-on so the background script matches Firefox.
 
 ## Files
 

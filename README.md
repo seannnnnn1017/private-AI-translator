@@ -133,7 +133,7 @@ When **快速翻譯** is disabled and you select a single word:
   - `Custom API`: verify the server is OpenAI-compatible and reachable from the browser.
 - Chat table not rendering:
   - Make sure the reply uses a normal Markdown table, not a fenced code block.
-  - Reload the extension after updating `content.js` or prompt files.
+  - Reload the extension after updating content script files (`content*.js`) or prompt files.
 - No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
 - Changes not applied: reload the extension in `about:debugging` or `chrome://extensions`.
 - Firefox install error about `background.service_worker`: run `./use-manifest.sh firefox` and reload the temporary add-on.
@@ -143,7 +143,11 @@ When **快速翻譯** is disabled and you select a single word:
 
 ## Files
 
-- `content.js`: selection UI, floating panels, quick chat UI, Markdown chat rendering, settings UI, TTS button
+- `content.js`: shared state + common utilities (drag/resize, markdown rendering, shared helpers)
+- `content.translate.js`: translate button, selection tracking, translation card, TTS playback
+- `content.chat.js`: quick chat launcher, chat panel, chat history and rendering
+- `content.settings.js`: language/fast mode/API settings UI and storage sync
+- `content.bootstrap.js`: content runtime listeners and startup wiring
 - `background.js`: provider-aware translation and chat requests, prompt loading, settings state, TTS request
 - `tts_server.py`: local pyttsx3 TTS server
 - `manifest.firefox.json`: Firefox manifest (`background.scripts`)

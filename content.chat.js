@@ -23,6 +23,7 @@
     color: #f5f5f5;
     font-size: 13px;
     cursor: pointer;
+    user-select: none;
     z-index: 2147483646;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     transition: background 0.15s, box-shadow 0.15s;
@@ -53,7 +54,39 @@
     btn.style.boxShadow = "0 8px 24px rgba(0,0,0,.3)";
   });
 
+  let didDrag = false;
+
+  btn.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    const rect = btn.getBoundingClientRect();
+    btn.style.right = "auto";
+    btn.style.left = `${rect.left}px`;
+    const startX = e.clientX;
+    const startLeft = rect.left;
+    didDrag = false;
+
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      if (!didDrag && Math.abs(dx) < 4) return;
+      didDrag = true;
+      btn.style.cursor = "grabbing";
+      btn.style.left = `${clamp(startLeft + dx, BOX_MARGIN, window.innerWidth - btn.offsetWidth - BOX_MARGIN)}px`;
+    };
+
+    const onUp = () => {
+      if (didDrag) btn.style.cursor = "pointer";
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  });
+
   btn.addEventListener("click", () => {
+    if (didDrag) return;
     if (chatPanel && chatPanel.style.display !== "none") {
       hideChatPanel();
       return;
@@ -565,18 +598,24 @@ function showChatPanel(fromRect) {
   setChatPendingState(chatPending);
   renderChatHistory();
   if (wasHidden && !panel.dataset.positioned) {
-    positionChatPanelDefault(panel);
+    if (fromRect) {
+      panel.style.width = `${fromRect.width}px`;
+      panel.style.left = `${fromRect.left}px`;
+      panel.style.right = "auto";
+      panel.style.bottom = "auto";
+      const panelH = panel.offsetHeight || CHAT_PANEL_MIN_HEIGHT;
+      panel.style.top = `${clamp(fromRect.top, BOX_MARGIN, window.innerHeight - panelH - BOX_MARGIN)}px`;
+    } else {
+      positionChatPanelDefault(panel);
+    }
     panel.dataset.positioned = "true";
   }
   if (fromRect && wasHidden) {
     const toRect = panel.getBoundingClientRect();
-    const dx = (fromRect.left + fromRect.width / 2) - (toRect.left + toRect.width / 2);
-    const dy = (fromRect.top + fromRect.height / 2) - (toRect.top + toRect.height / 2);
-    const sx = fromRect.width / toRect.width;
     const sy = fromRect.height / toRect.height;
     panel.style.transition = "none";
-    panel.style.transformOrigin = "center center";
-    panel.style.transform = `translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+    panel.style.transformOrigin = "top center";
+    panel.style.transform = `scaleY(${sy})`;
     panel.style.opacity = "0.7";
     requestAnimationFrame(() => {
       panel.style.transition = "transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease-out";

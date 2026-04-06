@@ -914,8 +914,10 @@ function getProviderErrorMessage(provider, body, fallbackStatus) {
   return `${provider} HTTP ${fallbackStatus}`;
 }
 
+const THINK_BLOCK_RE = /<think>[\s\S]*?<\/think>/gi;
+
 function stripThinkBlocks(text) {
-  return String(text || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  return trimString(text).replace(THINK_BLOCK_RE, "").trim();
 }
 
 async function requestOpenAiCompatibleCompletion(provider, profile, messages) {

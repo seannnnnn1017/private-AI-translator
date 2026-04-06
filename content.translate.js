@@ -443,7 +443,7 @@ function requestTtsPlayback(text, button) {
 
   const labels = getUiLabels();
 
-  speechSynthesis.cancel();
+  if (speechSynthesis.speaking) speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(trimmed);
   utterance.lang = "en-US";

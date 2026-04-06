@@ -253,7 +253,6 @@ let chatPending = false;
 let pendingChatSelection = null;
 let chatRequestVersion = 0;
 
-
 function makeDraggable(handle, target) {
   handle.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;

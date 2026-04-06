@@ -126,14 +126,6 @@ function updateSelection() {
   showTranslateButtonAt(info.tailRect || info.lineRect || info.rect);
 }
 
-document.addEventListener("selectionchange", scheduleSelectionUpdate, true);
-document.addEventListener("mouseup", scheduleSelectionUpdate, true);
-document.addEventListener("keyup", scheduleSelectionUpdate, true);
-document.addEventListener("keydown", handleQuickChatShortcut, true);
-window.addEventListener("scroll", scheduleSelectionUpdate, true);
-window.addEventListener("resize", scheduleSelectionUpdate, true);
-initLanguageSettings();
-
 function ensureBox() {
   if (box) return box;
 

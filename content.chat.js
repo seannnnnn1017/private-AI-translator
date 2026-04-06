@@ -562,7 +562,7 @@ function showChatPanel() {
   const panel = ensureChatPanel();
   const wasHidden = panel.style.display === "none";
   panel.style.display = "flex";
-  if (chatPanelInput) chatPanelInput.disabled = chatPending;
+  setChatPendingState(chatPending);
   renderChatHistory();
   if (wasHidden && !panel.dataset.positioned) {
     positionChatPanelDefault(panel);
@@ -654,9 +654,17 @@ function setChatPendingState(value) {
   chatPending = Boolean(value);
 
   if (chatLauncherInput) chatLauncherInput.disabled = chatPending;
-  if (chatLauncherSend) chatLauncherSend.disabled = chatPending;
+  if (chatLauncherSend) {
+    chatLauncherSend.disabled = chatPending;
+    chatLauncherSend.style.opacity = chatPending ? "0.5" : "1";
+    chatLauncherSend.style.cursor = chatPending ? "not-allowed" : "pointer";
+  }
   if (chatPanelInput) chatPanelInput.disabled = chatPending;
-  if (chatPanelSend) chatPanelSend.disabled = chatPending;
+  if (chatPanelSend) {
+    chatPanelSend.disabled = chatPending;
+    chatPanelSend.style.opacity = chatPending ? "0.5" : "1";
+    chatPanelSend.style.cursor = chatPending ? "not-allowed" : "pointer";
+  }
 }
 
 function formatChatErrorMessage(error) {

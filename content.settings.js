@@ -558,6 +558,9 @@ function updateSettingsPanelText() {
   if (chatPanelClose) {
     chatPanelClose.setAttribute("aria-label", labels.chatReset);
   }
+  if (chatTrigger) {
+    chatTrigger.children[1].textContent = labels.chatTriggerLabel;
+  }
   if (translateBtn) translateBtn.textContent = labels.translateBtn;
 
   if (settingsSelect && optionLabels) {

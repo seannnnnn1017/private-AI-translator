@@ -37,20 +37,15 @@ function storageSet(payload) {
 const SETTINGS_KEY = "ptLanguage";
 const SETTINGS_FAST_KEY = "ptFastTranslate";
 const API_SETTINGS_KEY = "ptApiSettings";
-const DEFAULT_LANGUAGE = "zh";
+const DEFAULT_LANGUAGE = "English";
 const DEFAULT_FAST_MODE = false;
 const DEFAULT_API_PROVIDER = "lmstudio";
-const LANGUAGE_LABELS = {
-  zh: "中文",
-  ja: "日文",
-  en: "英文"
+const LANGUAGE_CODE_MAP = { zh: "Traditional Chinese", ja: "Japanese", en: "English" };
+const PRESET_PROMPT_NAMES = {
+  "Traditional Chinese": "Traditional Chinese",
+  "Japanese": "Japanese",
+  "English": "English"
 };
-const LANGUAGE_PROMPT_NAMES = {
-  zh: "Traditional Chinese",
-  ja: "Japanese",
-  en: "English"
-};
-const LANGUAGE_VALUES = new Set(Object.keys(LANGUAGE_LABELS));
 const API_PROVIDER_DEFAULTS = {
   lmstudio: {
     baseUrl: "http://127.0.0.1:1234",
@@ -196,15 +191,14 @@ const promptsCache = new Map();
 const promptsPromise = new Map();
 
 function normalizeLanguage(lang) {
-  return LANGUAGE_VALUES.has(lang) ? lang : DEFAULT_LANGUAGE;
+  if (!lang || typeof lang !== "string") return DEFAULT_LANGUAGE;
+  const trimmed = lang.trim();
+  return LANGUAGE_CODE_MAP[trimmed] || (trimmed ? trimmed : DEFAULT_LANGUAGE);
 }
 
 function getTargetLanguageName(lang) {
   const normalized = normalizeLanguage(lang);
-  return (
-    LANGUAGE_PROMPT_NAMES[normalized] ||
-    LANGUAGE_PROMPT_NAMES[DEFAULT_LANGUAGE]
-  );
+  return PRESET_PROMPT_NAMES[normalized] || normalized;
 }
 
 function normalizeProvider(provider) {
@@ -295,6 +289,49 @@ async function loadSettings() {
     currentFastMode = DEFAULT_FAST_MODE;
     currentApiSettings = createDefaultApiSettings();
   }
+}
+
+async function generateUiLabels(language) {
+  const EN_LABELS = {
+    translateBtn: "Translate",
+    translationTitle: "Translation",
+    play: "Play",
+    close: "Close",
+    loading: "Translating...",
+    ttsGenerating: "Generating",
+    ttsFailed: "Failed",
+    chatTitle: "English Helper",
+    chatTriggerLabel: "English Helper",
+    chatLauncherPlaceholder: "Ask a quick English question...",
+    chatLauncherHint: "Press Command + / to open or close",
+    chatInputPlaceholder: "Ask another English question...",
+    chatEmpty: "Ask about vocabulary, grammar, tone, or usage.",
+    chatThinking: "Thinking...",
+    chatFailed: "Chat failed",
+    minimize: "Hide",
+    chatReset: "Clear and close",
+    toggle: "Lang",
+    title: "Translation Language",
+    fast: "Fast Translate",
+    apiHint: "OpenAI and Gemini need a key. Self-hosted OpenAI-compatible APIs can leave it blank."
+  };
+
+  const messages = [
+    {
+      role: "system",
+      content: "You are a UI translator. Return only valid JSON, no explanation."
+    },
+    {
+      role: "user",
+      content: `Translate these UI strings into ${language}.\nReturn the exact same JSON structure with translated values:\n\n${JSON.stringify(EN_LABELS, null, 2)}`
+    }
+  ];
+
+  const raw = await requestProviderCompletion(messages);
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+  const parsed = JSON.parse(cleaned);
+  // Merge: English fallback fills any keys the AI omitted
+  return { ...EN_LABELS, ...parsed };
 }
 
 function ensureSettingsLoaded() {
@@ -697,6 +734,29 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({
           ok: false,
           error: String(err?.message || err || "Chat failed")
+        });
+      }
+    })();
+
+    return true;
+  }
+
+  if (msg?.type === "GENERATE_LABELS") {
+    const language = trimString(msg.language);
+    if (!language) {
+      sendResponse({ ok: false, error: "EMPTY_LANGUAGE" });
+      return true;
+    }
+
+    (async () => {
+      try {
+        await ensureSettingsLoaded();
+        const labels = await generateUiLabels(language);
+        sendResponse({ ok: true, labels });
+      } catch (err) {
+        sendResponse({
+          ok: false,
+          error: String(err?.message || err || "Label generation failed")
         });
       }
     })();

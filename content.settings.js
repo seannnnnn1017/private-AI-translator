@@ -544,7 +544,7 @@ function renderLanguagePills() {
 function addLanguage(rawInput) {
   const trimmed = rawInput.trim();
   if (!trimmed) return;
-  const lang = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  const lang = trimmed.replace(/\b\w/g, (c) => c.toUpperCase());
   if (languageList.includes(lang)) {
     if (lang !== currentLanguage) {
       currentLanguage = lang;
@@ -579,6 +579,7 @@ function removeLanguage(lang) {
 }
 
 async function triggerLabelGeneration(lang) {
+  if (languagePillStates[lang] === 'pending') return;
   languagePillStates[lang] = "pending";
   renderLanguagePills();
   try {

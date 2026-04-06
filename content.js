@@ -108,6 +108,7 @@ const UI_LABELS = {
     apiHint:
       "OpenAI / Gemini 需要 API Key。自架 OpenAI 相容 API 可留空。",
     chatTitle: "英文問答",
+    chatTriggerLabel: "English Helper",
     chatLauncherPlaceholder: "快速問英文問題...",
     chatLauncherHint: "按 Command + / 開啟或關閉",
     chatInputPlaceholder: "繼續問英文問題...",
@@ -136,6 +137,7 @@ const UI_LABELS = {
     apiHint:
       "OpenAI / Gemini は API Key が必要です。OpenAI 互換 API は空欄可。",
     chatTitle: "英語 Q&A",
+    chatTriggerLabel: "English Helper",
     chatLauncherPlaceholder: "英語についてすばやく質問...",
     chatLauncherHint: "Command + / で開閉",
     chatInputPlaceholder: "英語について続けて質問...",
@@ -163,6 +165,7 @@ const UI_LABELS = {
     apiKey: "API Key",
     apiHint: "OpenAI and Gemini need a key. Self-hosted OpenAI-compatible APIs can leave it blank.",
     chatTitle: "English Helper",
+    chatTriggerLabel: "English Helper",
     chatLauncherPlaceholder: "Ask a quick English question...",
     chatLauncherHint: "Press Command + / to open or close",
     chatInputPlaceholder: "Ask another English question...",
@@ -229,6 +232,7 @@ let apiKeyInput;
 let apiHint;
 let fastModeToggle;
 let fastModeLabel;
+let chatTrigger;
 let chatLauncher;
 let chatLauncherInput;
 let chatLauncherHint;

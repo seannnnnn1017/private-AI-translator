@@ -1,4 +1,82 @@
-﻿function isEditableTarget(target) {
+﻿function ensureChatTrigger() {
+  if (chatTrigger) return chatTrigger;
+
+  const labels = getUiLabels();
+  const btn = document.createElement("button");
+  chatTrigger = btn;
+  btn.id = "pt-chat-trigger";
+  btn.type = "button";
+  btn.style.cssText = `
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(46, 46, 46, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+    color: #f5f5f5;
+    font-size: 13px;
+    cursor: pointer;
+    z-index: 2147483646;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    transition: background 0.15s, box-shadow 0.15s;
+  `;
+
+  const icon = document.createElement("span");
+  icon.textContent = "✦";
+  icon.style.cssText = "color:#ff6b3d;font-size:14px;line-height:1;";
+
+  const label = document.createElement("span");
+  label.textContent = labels.chatTriggerLabel;
+
+  const kbd = document.createElement("span");
+  kbd.textContent = "⌘/";
+  kbd.style.cssText =
+    "padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.08);color:#ffb498;font-size:11px;line-height:1;";
+
+  btn.appendChild(icon);
+  btn.appendChild(label);
+  btn.appendChild(kbd);
+
+  btn.addEventListener("mouseenter", () => {
+    btn.style.background = "rgba(56,56,56,0.9)";
+    btn.style.boxShadow = "0 10px 28px rgba(255,107,61,.2)";
+  });
+  btn.addEventListener("mouseleave", () => {
+    btn.style.background = "rgba(46,46,46,0.82)";
+    btn.style.boxShadow = "0 8px 24px rgba(0,0,0,.3)";
+  });
+
+  btn.addEventListener("click", () => {
+    if (chatPanel && chatPanel.style.display !== "none") {
+      hideChatPanel();
+      return;
+    }
+    if (chatLauncher && chatLauncher.style.display !== "none") {
+      hideChatLauncher();
+      return;
+    }
+    pendingChatSelection = captureChatSelection();
+    if (chatHistory.length) {
+      hideChatLauncher();
+      showChatPanel();
+      focusChatInput();
+    } else {
+      showChatLauncher();
+    }
+  });
+
+  document.documentElement.appendChild(btn);
+  return btn;
+}
+
+function isEditableTarget(target) {
   const el =
     target?.nodeType === Node.ELEMENT_NODE ? target : target?.parentElement;
   if (!el) return false;
@@ -13,6 +91,7 @@ function isChatUiTarget(target) {
   const el =
     target?.nodeType === Node.ELEMENT_NODE ? target : target?.parentElement;
   if (!el) return false;
+  if (chatTrigger && chatTrigger.contains(el)) return true;
   if (chatLauncher && chatLauncher.contains(el)) return true;
   if (chatPanel && chatPanel.contains(el)) return true;
   return false;

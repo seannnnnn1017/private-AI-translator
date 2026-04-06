@@ -12,4 +12,5 @@ document.addEventListener("keydown", handleQuickChatShortcut, true);
 window.addEventListener("scroll", scheduleSelectionUpdate, true);
 window.addEventListener("resize", scheduleSelectionUpdate, true);
 initLanguageSettings();
+ensureChatTrigger();
 

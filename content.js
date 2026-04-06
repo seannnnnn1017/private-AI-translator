@@ -63,15 +63,17 @@ const CHAT_SHORTCUT_LABEL = "Command + /";
 const SETTINGS_KEY = "ptLanguage";
 const SETTINGS_FAST_KEY = "ptFastTranslate";
 const API_SETTINGS_KEY = "ptApiSettings";
-const DEFAULT_LANGUAGE = "zh";
+const DEFAULT_LANGUAGE = "English";
 const DEFAULT_FAST_MODE = false;
 const DEFAULT_API_PROVIDER = "lmstudio";
-const LANGUAGE_OPTIONS = [
-  { value: "zh", label: "中文" },
-  { value: "ja", label: "日本語" },
-  { value: "en", label: "English" }
-];
-const LANGUAGE_VALUES = new Set(LANGUAGE_OPTIONS.map((opt) => opt.value));
+const LANGUAGE_LIST_KEY = "ptLanguageList";
+const LABEL_CACHE_KEY = "ptLabelCache";
+const PRESET_LANGUAGES = {
+  "Traditional Chinese": { uiKey: "zh" },
+  "Japanese": { uiKey: "ja" },
+  "English": { uiKey: "en" }
+};
+const DEFAULT_LANGUAGE_LIST = ["English", "Traditional Chinese", "Japanese"];
 const API_PROVIDER_DEFAULTS = {
   lmstudio: {
     baseUrl: "http://127.0.0.1:1234",
@@ -183,11 +185,6 @@ const UI_LABELS = {
     ttsFailed: "Failed"
   }
 };
-const LANGUAGE_OPTION_LABELS = {
-  zh: { zh: "中文", ja: "日文", en: "英文" },
-  ja: { zh: "中国語", ja: "日本語", en: "英語" },
-  en: { zh: "Chinese", ja: "Japanese", en: "English" }
-};
 const API_PROVIDER_OPTION_LABELS = {
   zh: {
     lmstudio: "LM Studio",
@@ -216,7 +213,6 @@ let settingsWidget;
 let settingsPanel;
 let settingsToggle;
 let settingsTitle;
-let settingsSelect;
 let apiTitle;
 let apiSectionToggle;
 let apiSectionBody;
@@ -254,6 +250,12 @@ let chatHistory = [];
 let chatPending = false;
 let pendingChatSelection = null;
 let chatRequestVersion = 0;
+let languagePillsContainer;
+let languageAddInput;
+let languageAddBtn;
+let languagePillStates = {};
+let labelCache = {};
+let languageList = [...DEFAULT_LANGUAGE_LIST];
 
 function makeDraggable(handle, target) {
   handle.addEventListener("pointerdown", (e) => {
@@ -677,4 +679,19 @@ function injectGlobalStyles() {
     }
   `;
   document.documentElement.appendChild(style);
+}
+
+function getUiLabels() {
+  if (currentLanguage === "Traditional Chinese") return UI_LABELS.zh;
+  if (currentLanguage === "Japanese") return UI_LABELS.ja;
+  if (currentLanguage === "English") return UI_LABELS.en;
+  if (labelCache[currentLanguage]) return labelCache[currentLanguage];
+  return UI_LABELS.en;
+}
+
+function getLanguageBadge(lang) {
+  if (lang === "English") return "EN";
+  if (lang === "Traditional Chinese") return "中";
+  if (lang === "Japanese") return "日";
+  return String(lang || "").slice(0, 2).toUpperCase() || "??";
 }

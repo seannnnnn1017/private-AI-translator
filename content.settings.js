@@ -176,10 +176,23 @@ function ensureSettingsWidget() {
   title.style.cssText =
     "font-weight: 700; font-size: 12px; margin-bottom: 8px; color: #ff6b3d;";
 
-  settingsSelect = document.createElement("select");
-  settingsSelect.style.cssText = `
-    width: 100%;
-    padding: 6px 8px;
+  const pillsContainer = document.createElement("div");
+  languagePillsContainer = pillsContainer;
+  pillsContainer.style.cssText =
+    "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;min-height:28px;max-height:96px;overflow-y:auto;";
+
+  const addRow = document.createElement("div");
+  addRow.style.cssText = "display:flex;gap:6px;align-items:center;margin-bottom:2px;";
+
+  const addInput = document.createElement("input");
+  languageAddInput = addInput;
+  addInput.type = "text";
+  addInput.placeholder = "Add a language...";
+  addInput.spellcheck = false;
+  addInput.autocomplete = "off";
+  addInput.style.cssText = `
+    flex: 1;
+    padding: 5px 8px;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(26, 26, 26, 0.7);
@@ -188,12 +201,24 @@ function ensureSettingsWidget() {
     box-sizing: border-box;
   `;
 
-  LANGUAGE_OPTIONS.forEach((opt) => {
-    const option = document.createElement("option");
-    option.value = opt.value;
-    option.textContent = opt.label;
-    settingsSelect.appendChild(option);
-  });
+  const addBtn = document.createElement("button");
+  languageAddBtn = addBtn;
+  addBtn.type = "button";
+  addBtn.textContent = "+";
+  addBtn.style.cssText = `
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+  `;
+
+  addRow.appendChild(addInput);
+  addRow.appendChild(addBtn);
 
   const fastRow = document.createElement("label");
   fastRow.style.cssText =
@@ -343,7 +368,8 @@ function ensureSettingsWidget() {
     "margin-top:8px;font-size:11px;line-height:1.4;opacity:.74;";
 
   settingsPanel.appendChild(title);
-  settingsPanel.appendChild(settingsSelect);
+  settingsPanel.appendChild(pillsContainer);
+  settingsPanel.appendChild(addRow);
   settingsPanel.appendChild(fastRow);
   settingsPanel.appendChild(divider);
   settingsPanel.appendChild(apiHeader);
@@ -372,13 +398,6 @@ function ensureSettingsWidget() {
     if (isOpening) {
       setApiSectionExpanded(false);
     }
-  });
-
-  settingsSelect.addEventListener("change", () => {
-    const nextLang = normalizeLanguage(settingsSelect.value);
-    currentLanguage = nextLang;
-    updateSettingsPanelText();
-    saveLanguageSetting(nextLang);
   });
 
   fastModeToggle.addEventListener("change", () => {
@@ -432,10 +451,148 @@ function ensureSettingsWidget() {
   );
 
   enableSettingsDrag(toggle, settingsWidget);
+
+  addBtn.addEventListener("click", () => {
+    const val = addInput.value.trim();
+    if (val) {
+      addLanguage(val);
+      addInput.value = "";
+    }
+  });
+
+  addInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const val = addInput.value.trim();
+      if (val) {
+        addLanguage(val);
+        addInput.value = "";
+      }
+    }
+  });
+
+  addInput.addEventListener("focus", () => {
+    addInput.style.outline = "2px solid rgba(255,107,61,.6)";
+    addInput.style.outlineOffset = "0";
+  });
+  addInput.addEventListener("blur", () => {
+    addInput.style.outline = "";
+    addInput.style.outlineOffset = "";
+  });
+
   syncApiInputsFromState();
   setApiSectionExpanded(false);
   updateSettingsPanelText();
   return settingsWidget;
+}
+
+function renderLanguagePills() {
+  if (!languagePillsContainer) return;
+  languagePillsContainer.innerHTML = "";
+  languageList.forEach((lang) => {
+    const pill = document.createElement("button");
+    pill.type = "button";
+    const isSelected = lang === currentLanguage;
+    const state = languagePillStates[lang];
+
+    pill.style.cssText = `
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px;
+      border: 1px solid ${isSelected ? "#ff6b3d" : "rgba(255,255,255,.12)"};
+      background: ${isSelected ? "#ff6b3d" : "rgba(255,255,255,.06)"};
+      color: ${isSelected ? "#fff" : "#f5f5f5"};
+      font-size: 12px; cursor: pointer; line-height: 1.4;
+      opacity: ${state === "pending" ? "0.5" : "1"};
+    `;
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent =
+      lang + (state === "pending" ? " ···" : state === "failed" ? " ⚠" : "");
+    pill.appendChild(nameSpan);
+
+    if (languageList.length > 1) {
+      const removeBtn = document.createElement("span");
+      removeBtn.textContent = "×";
+      removeBtn.style.cssText =
+        "font-size:10px;opacity:.7;margin-left:2px;line-height:1;";
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeLanguage(lang);
+      });
+      pill.appendChild(removeBtn);
+    }
+
+    pill.addEventListener("click", () => {
+      if (state === "failed") {
+        triggerLabelGeneration(lang);
+        return;
+      }
+      if (state === "pending") return;
+      if (lang === currentLanguage) return;
+      currentLanguage = lang;
+      saveLanguageSetting(lang);
+      updateSettingsPanelText();
+      renderLanguagePills();
+      if (!PRESET_LANGUAGES[lang] && !labelCache[lang]) {
+        triggerLabelGeneration(lang);
+      }
+    });
+
+    languagePillsContainer.appendChild(pill);
+  });
+}
+
+function addLanguage(rawInput) {
+  const trimmed = rawInput.trim();
+  if (!trimmed) return;
+  const lang = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  if (languageList.includes(lang)) {
+    if (lang !== currentLanguage) {
+      currentLanguage = lang;
+      saveLanguageSetting(lang);
+      updateSettingsPanelText();
+      renderLanguagePills();
+    }
+    return;
+  }
+  languageList = [...languageList, lang];
+  currentLanguage = lang;
+  saveLanguageSetting(lang);
+  updateSettingsPanelText();
+  renderLanguagePills();
+  if (!PRESET_LANGUAGES[lang] && !labelCache[lang]) {
+    triggerLabelGeneration(lang);
+  }
+}
+
+function removeLanguage(lang) {
+  if (languageList.length <= 1) return;
+  languageList = languageList.filter((l) => l !== lang);
+  delete languagePillStates[lang];
+  if (currentLanguage === lang) {
+    currentLanguage = languageList[0];
+    saveLanguageSetting(currentLanguage);
+    updateSettingsPanelText();
+  } else {
+    storageSet({ [LANGUAGE_LIST_KEY]: languageList }).catch(() => {});
+  }
+  renderLanguagePills();
+}
+
+async function triggerLabelGeneration(lang) {
+  languagePillStates[lang] = "pending";
+  renderLanguagePills();
+  try {
+    const res = await sendMessage({ type: "GENERATE_LABELS", language: lang });
+    if (!res || !res.ok) throw new Error(res?.error || "Generation failed");
+    labelCache[lang] = res.labels;
+    await storageSet({ [LABEL_CACHE_KEY]: labelCache });
+    delete languagePillStates[lang];
+    if (currentLanguage === lang) updateSettingsPanelText();
+    renderLanguagePills();
+  } catch (err) {
+    languagePillStates[lang] = "failed";
+    renderLanguagePills();
+  }
 }
 
 function notifyLanguage(lang) {

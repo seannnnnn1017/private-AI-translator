@@ -914,6 +914,10 @@ function getProviderErrorMessage(provider, body, fallbackStatus) {
   return `${provider} HTTP ${fallbackStatus}`;
 }
 
+function stripThinkBlocks(text) {
+  return String(text || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+}
+
 async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
   const headers = { "Content-Type": "application/json" };
 
@@ -930,7 +934,8 @@ async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
     body: JSON.stringify({
       model: profile.model,
       messages,
-      temperature: 0.2
+      temperature: 0.2,
+      enable_thinking: false
     })
   });
 
@@ -940,11 +945,11 @@ async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
     throw new Error(message);
   }
 
-  const out = readOpenAiMessageContent(
-    data?.choices?.[0]?.message?.content
+  const out = stripThinkBlocks(
+    readOpenAiMessageContent(data?.choices?.[0]?.message?.content)
   );
   if (!out) throw new Error("No content in response");
-  return out.trim();
+  return out;
 }
 
 function normalizeGeminiModel(model) {

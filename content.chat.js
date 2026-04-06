@@ -558,7 +558,7 @@ function positionChatPanelDefault(panel) {
   panel.style.bottom = "auto";
 }
 
-function showChatPanel() {
+function showChatPanel(fromRect) {
   const panel = ensureChatPanel();
   const wasHidden = panel.style.display === "none";
   panel.style.display = "flex";
@@ -567,6 +567,22 @@ function showChatPanel() {
   if (wasHidden && !panel.dataset.positioned) {
     positionChatPanelDefault(panel);
     panel.dataset.positioned = "true";
+  }
+  if (fromRect && wasHidden) {
+    const toRect = panel.getBoundingClientRect();
+    const dx = (fromRect.left + fromRect.width / 2) - (toRect.left + toRect.width / 2);
+    const dy = (fromRect.top + fromRect.height / 2) - (toRect.top + toRect.height / 2);
+    const sx = fromRect.width / toRect.width;
+    const sy = fromRect.height / toRect.height;
+    panel.style.transition = "none";
+    panel.style.transformOrigin = "center center";
+    panel.style.transform = `translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+    panel.style.opacity = "0.7";
+    requestAnimationFrame(() => {
+      panel.style.transition = "transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease-out";
+      panel.style.transform = "";
+      panel.style.opacity = "";
+    });
   }
   return panel;
 }
@@ -696,6 +712,11 @@ async function submitChatQuestion(rawText, source = "panel") {
     chatPanelInput.value = "";
   }
 
+  const launcherFromRect =
+    source === "launcher" && chatLauncher && chatLauncher.style.display !== "none"
+      ? chatLauncher.getBoundingClientRect()
+      : null;
+
   hideChatLauncher();
 
   chatHistory.push({
@@ -703,7 +724,7 @@ async function submitChatQuestion(rawText, source = "panel") {
     text: question
   });
   setChatPendingState(true);
-  showChatPanel();
+  showChatPanel(launcherFromRect);
 
   try {
     const result = await sendMessage({

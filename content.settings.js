@@ -3,7 +3,10 @@
 }
 
 function normalizeLanguage(lang) {
-  return LANGUAGE_VALUES.has(lang) ? lang : DEFAULT_LANGUAGE;
+  if (!lang || typeof lang !== "string") return DEFAULT_LANGUAGE;
+  const trimmed = lang.trim();
+  const migrated = { zh: "Traditional Chinese", ja: "Japanese", en: "English" }[trimmed];
+  return migrated || (trimmed ? trimmed : DEFAULT_LANGUAGE);
 }
 
 function normalizeProvider(provider) {
@@ -470,7 +473,7 @@ function notifyApiSettings(settings) {
 
 async function saveLanguageSetting(lang) {
   try {
-    await storageSet({ [SETTINGS_KEY]: lang });
+    await storageSet({ [SETTINGS_KEY]: lang, [LANGUAGE_LIST_KEY]: languageList });
   } catch (err) {
     // ignore
   }
@@ -503,7 +506,9 @@ async function initLanguageSettings() {
     const stored = await storageGet([
       SETTINGS_KEY,
       SETTINGS_FAST_KEY,
-      API_SETTINGS_KEY
+      API_SETTINGS_KEY,
+      LANGUAGE_LIST_KEY,
+      LABEL_CACHE_KEY
     ]);
     const nextLang = normalizeLanguage(stored?.[SETTINGS_KEY]);
     currentLanguage = nextLang;
@@ -512,63 +517,68 @@ async function initLanguageSettings() {
         ? stored[SETTINGS_FAST_KEY]
         : DEFAULT_FAST_MODE;
     currentApiSettings = normalizeApiSettings(stored?.[API_SETTINGS_KEY]);
+
+    const storedList = stored?.[LANGUAGE_LIST_KEY];
+    if (Array.isArray(storedList) && storedList.length) {
+      languageList = storedList;
+    } else {
+      languageList = [...DEFAULT_LANGUAGE_LIST];
+    }
+    if (!languageList.includes(currentLanguage)) {
+      languageList = [currentLanguage, ...languageList];
+    }
+
+    const storedCache = stored?.[LABEL_CACHE_KEY];
+    if (storedCache && typeof storedCache === "object") {
+      labelCache = storedCache;
+    }
   } catch (err) {
     currentLanguage = DEFAULT_LANGUAGE;
     currentFastMode = DEFAULT_FAST_MODE;
     currentApiSettings = createDefaultApiSettings();
+    languageList = [...DEFAULT_LANGUAGE_LIST];
+    labelCache = {};
   }
 
-  if (settingsSelect) settingsSelect.value = currentLanguage;
   if (fastModeToggle) fastModeToggle.checked = currentFastMode;
   syncApiInputsFromState();
   updateSettingsPanelText();
+  renderLanguagePills();
+
+  if (!PRESET_LANGUAGES[currentLanguage] && !labelCache[currentLanguage]) {
+    triggerLabelGeneration(currentLanguage);
+  }
+
   notifyLanguage(currentLanguage);
   notifyFastMode(currentFastMode);
   notifyApiSettings(currentApiSettings);
 }
 
 function updateSettingsPanelText() {
-  const lang = normalizeLanguage(currentLanguage);
-  const labels = UI_LABELS[lang] || UI_LABELS[DEFAULT_LANGUAGE];
-  const optionLabels =
-    LANGUAGE_OPTION_LABELS[lang] || LANGUAGE_OPTION_LABELS[DEFAULT_LANGUAGE];
-  const providerLabels =
-    API_PROVIDER_OPTION_LABELS[lang] ||
-    API_PROVIDER_OPTION_LABELS[DEFAULT_LANGUAGE];
+  const labels = getUiLabels();
+  const preset = PRESET_LANGUAGES[currentLanguage];
+  const providerLabels = preset
+    ? API_PROVIDER_OPTION_LABELS[preset.uiKey]
+    : API_PROVIDER_OPTION_LABELS.en;
 
-  if (settingsToggle) settingsToggle.textContent = labels.toggle;
+  if (settingsToggle) settingsToggle.textContent = getLanguageBadge(currentLanguage);
   if (settingsTitle) settingsTitle.textContent = labels.title;
   if (fastModeLabel) fastModeLabel.textContent = labels.fast;
-  if (apiTitle) apiTitle.textContent = labels.providerTitle;
-  if (providerLabel) providerLabel.textContent = labels.provider;
-  if (baseUrlLabel) baseUrlLabel.textContent = labels.baseUrl;
-  if (modelLabel) modelLabel.textContent = labels.model;
-  if (apiKeyLabel) apiKeyLabel.textContent = labels.apiKey;
+  if (apiTitle) apiTitle.textContent = labels.providerTitle || UI_LABELS.en.providerTitle;
+  if (providerLabel) providerLabel.textContent = labels.provider || UI_LABELS.en.provider;
+  if (baseUrlLabel) baseUrlLabel.textContent = labels.baseUrl || UI_LABELS.en.baseUrl;
+  if (modelLabel) modelLabel.textContent = labels.model || UI_LABELS.en.model;
+  if (apiKeyLabel) apiKeyLabel.textContent = labels.apiKey || UI_LABELS.en.apiKey;
   if (apiHint) apiHint.textContent = labels.apiHint;
-  if (chatLauncherInput) {
-    chatLauncherInput.placeholder = labels.chatLauncherPlaceholder;
-  }
+  if (chatLauncherInput) chatLauncherInput.placeholder = labels.chatLauncherPlaceholder;
   if (chatLauncherHint) chatLauncherHint.textContent = labels.chatLauncherHint;
   if (chatPanelTitle) chatPanelTitle.textContent = labels.chatTitle;
   if (chatPanelShortcut) chatPanelShortcut.textContent = CHAT_SHORTCUT_LABEL;
   if (chatPanelInput) chatPanelInput.placeholder = labels.chatInputPlaceholder;
-  if (chatPanelMinimize) {
-    chatPanelMinimize.setAttribute("aria-label", labels.minimize);
-  }
-  if (chatPanelClose) {
-    chatPanelClose.setAttribute("aria-label", labels.chatReset);
-  }
-  if (chatTrigger) {
-    chatTrigger.children[1].textContent = labels.chatTriggerLabel;
-  }
+  if (chatPanelMinimize) chatPanelMinimize.setAttribute("aria-label", labels.minimize);
+  if (chatPanelClose) chatPanelClose.setAttribute("aria-label", labels.chatReset);
+  if (chatTrigger) chatTrigger.children[1].textContent = labels.chatTriggerLabel;
   if (translateBtn) translateBtn.textContent = labels.translateBtn;
-
-  if (settingsSelect && optionLabels) {
-    Array.from(settingsSelect.options).forEach((opt) => {
-      const nextLabel = optionLabels[opt.value];
-      if (nextLabel) opt.textContent = nextLabel;
-    });
-  }
 
   if (providerSelect && providerLabels) {
     Array.from(providerSelect.options).forEach((opt) => {
@@ -592,11 +602,6 @@ function updateSettingsPanelText() {
       if (!playBtn.disabled) playBtn.textContent = labels.play;
     }
   }
-}
-
-function getUiLabels() {
-  const lang = normalizeLanguage(currentLanguage);
-  return UI_LABELS[lang] || UI_LABELS[DEFAULT_LANGUAGE];
 }
 
 function enableSettingsDrag(handle, target) {

@@ -75,8 +75,6 @@ const API_PROVIDER_DEFAULTS = {
 };
 const API_PROVIDER_VALUES = new Set(Object.keys(API_PROVIDER_DEFAULTS));
 
-const TTS_ENDPOINT = "http://127.0.0.1:5005/tts";
-
 const PROMPT_CONFIG = {
   translate: {
     system: {
@@ -337,41 +335,6 @@ async function setApiSettings(settings) {
     // ignore
   }
   return nextSettings;
-}
-
-async function synthesizeSpeech(text, language) {
-  const payload = {
-    text,
-    language
-  };
-
-  const res = await fetch(TTS_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`TTS HTTP ${res.status}: ${body}`);
-  }
-
-  const contentType = (res.headers.get("content-type") || "").toLowerCase();
-
-  if (contentType.startsWith("audio/")) {
-    const buffer = await res.arrayBuffer();
-    if (!buffer || buffer.byteLength === 0) {
-      throw new Error("TTS empty response");
-    }
-    return { ok: true, buffer, mimeType: contentType || "audio/wav" };
-  }
-
-  const data = await res.json().catch(() => null);
-  if (data && data.ok === false) {
-    throw new Error(data.error || "TTS failed");
-  }
-
-  return { ok: true, mode: "server" };
 }
 
 async function loadPromptFile(path, fallback) {
@@ -738,28 +701,6 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
     })();
 
-    return true;
-  }
-
-  if (msg?.type === "SPEAK_TEXT") {
-    const text = String(msg.text || "").trim();
-    if (!text) {
-      sendResponse({ ok: false, error: "EMPTY_TEXT" });
-      return true;
-    }
-
-    // Respond immediately; TTS runs in the background without blocking.
-    sendResponse({ ok: true, mode: "server" });
-
-    (async () => {
-      await ensureSettingsLoaded();
-      const language = normalizeLanguage(msg.language || currentLanguage);
-      try {
-        await synthesizeSpeech(text, language);
-      } catch (err) {
-        console.warn("TTS request failed:", err);
-      }
-    })();
     return true;
   }
 

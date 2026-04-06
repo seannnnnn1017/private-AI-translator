@@ -569,7 +569,7 @@ function updateSettingsPanelText() {
   if (baseUrlLabel) baseUrlLabel.textContent = labels.baseUrl || UI_LABELS.en.baseUrl;
   if (modelLabel) modelLabel.textContent = labels.model || UI_LABELS.en.model;
   if (apiKeyLabel) apiKeyLabel.textContent = labels.apiKey || UI_LABELS.en.apiKey;
-  if (apiHint) apiHint.textContent = labels.apiHint;
+  if (apiHint) apiHint.textContent = labels.apiHint || UI_LABELS.en.apiHint;
   if (chatLauncherInput) chatLauncherInput.placeholder = labels.chatLauncherPlaceholder;
   if (chatLauncherHint) chatLauncherHint.textContent = labels.chatLauncherHint;
   if (chatPanelTitle) chatPanelTitle.textContent = labels.chatTitle;

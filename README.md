@@ -2,7 +2,7 @@
 
 A lightweight browser extension for Firefox and Chrome that translates selected text using a local or remote LLM API. It supports any OpenAI-compatible backend, including LM Studio, OpenAI, Google Gemini, and custom self-hosted servers.
 
-> Screenshot placeholder — overall UI overview
+![Private AI Translator in action](image.png)
 
 ---
 

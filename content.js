@@ -651,3 +651,24 @@ function normalizeInlineText(input) {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+function injectGlobalStyles() {
+  if (document.getElementById("pt-global-styles")) return;
+  const style = document.createElement("style");
+  style.id = "pt-global-styles";
+  style.textContent = `
+    @keyframes pt-fade-in {
+      from { opacity:0; transform:translateY(4px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes pt-slide-up {
+      from { opacity:0; transform:translateX(-50%) translateY(8px); }
+      to   { opacity:1; transform:translateX(-50%) translateY(0); }
+    }
+    #pt-chat-trigger:focus-visible {
+      outline: 2px solid rgba(255,107,61,.7);
+      outline-offset: 2px;
+    }
+  `;
+  document.documentElement.appendChild(style);
+}

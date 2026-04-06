@@ -1,4 +1,5 @@
-﻿ext.runtime.onMessage.addListener((msg) => {
+﻿injectGlobalStyles();
+ext.runtime.onMessage.addListener((msg) => {
   if (msg?.type !== "SHOW_TRANSLATION") return;
   const { original, translated } = msg;
   showTranslation(original, translated);

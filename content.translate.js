@@ -436,77 +436,40 @@ function positionBoxNearRect(target, rect) {
   target.style.top = `${top}px`;
 }
 
-async function requestTtsPlayback(text, button) {
+function requestTtsPlayback(text, button) {
   const trimmed = String(text || "").trim();
   if (!trimmed) return;
-  if (ttsInFlight) return;
+  if (!window.speechSynthesis) return;
 
   const labels = getUiLabels();
-  const cacheKey = `${currentLanguage}::${trimmed}`;
-  if (ttsCacheKey === cacheKey && ttsCacheUrl) {
-    playAudioUrl(ttsCacheUrl);
-    return;
-  }
 
-  const originalLabel =
-    button?.dataset?.label || button?.textContent || labels.play;
-  ttsInFlight = true;
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(trimmed);
+  utterance.lang = "en-US";
+
   if (button) {
-    button.dataset.label = labels.play;
-    button.textContent = labels.ttsGenerating;
     button.disabled = true;
+    button.textContent = labels.ttsGenerating;
   }
 
-  try {
-    const result = await sendMessage({
-      type: "SPEAK_TEXT",
-      text: trimmed,
-      language: currentLanguage
-    });
-
-    if (!result?.ok) {
-      throw new Error(result?.error || "TTS failed");
-    }
-
-    if (result.audio) {
-      const mimeType = result.mime || "audio/wav";
-      const audioBlob = new Blob([result.audio], { type: mimeType });
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      if (ttsCacheUrl) URL.revokeObjectURL(ttsCacheUrl);
-      ttsCacheKey = cacheKey;
-      ttsCacheUrl = audioUrl;
-
-      playAudioUrl(audioUrl);
-    }
-  } catch (err) {
-    console.warn("TTS failed:", err);
-    if (button) button.textContent = labels.ttsFailed;
-    setTimeout(() => {
-      if (button) button.textContent = originalLabel;
-    }, 1200);
-  } finally {
-    ttsInFlight = false;
+  utterance.onend = () => {
     if (button) {
       button.disabled = false;
-      if (button.textContent !== labels.ttsFailed) {
-        button.textContent = originalLabel;
-      }
+      button.textContent = button.dataset.label || labels.play;
     }
-  }
+  };
+
+  utterance.onerror = () => {
+    if (button) {
+      button.disabled = false;
+      button.textContent = labels.ttsFailed;
+      setTimeout(() => {
+        if (button) button.textContent = button.dataset.label || labels.play;
+      }, 1200);
+    }
+  };
+
+  speechSynthesis.speak(utterance);
 }
 
-function playAudioUrl(url) {
-  if (!ttsAudio) {
-    ttsAudio = new Audio();
-  } else {
-    try {
-      ttsAudio.pause();
-      ttsAudio.currentTime = 0;
-    } catch (err) {
-      // ignore
-    }
-  }
-  ttsAudio.src = url;
-  ttsAudio.play().catch(() => {});
-}

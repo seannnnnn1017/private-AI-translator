@@ -240,6 +240,7 @@ let chatPanelMessages;
 let chatPanelInput;
 let chatPanelMinimize;
 let chatPanelClose;
+let chatPanelSend;
 let settingsDragMoved = false;
 let lastSelectionRect = null;
 let lastRequestRect = null;

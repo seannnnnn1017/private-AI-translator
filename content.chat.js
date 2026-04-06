@@ -361,6 +361,9 @@ function ensureChatPanel() {
     padding-right: 2px;
   `;
 
+  const inputRow = document.createElement("div");
+  inputRow.style.cssText = "display:flex;gap:8px;align-items:center;flex-shrink:0;";
+
   const input = document.createElement("input");
   chatPanelInput = input;
   input.type = "text";
@@ -368,7 +371,8 @@ function ensureChatPanel() {
   input.spellcheck = false;
   input.placeholder = labels.chatInputPlaceholder;
   input.style.cssText = `
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -377,6 +381,14 @@ function ensureChatPanel() {
     font-size: 13px;
     box-sizing: border-box;
   `;
+  input.addEventListener("focus", () => {
+    input.style.outline = "2px solid rgba(255,107,61,.6)";
+    input.style.outlineOffset = "0";
+  });
+  input.addEventListener("blur", () => {
+    input.style.outline = "";
+    input.style.outlineOffset = "";
+  });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -387,6 +399,35 @@ function ensureChatPanel() {
     event.preventDefault();
     submitChatQuestion(input.value, "panel");
   });
+
+  const panelSendBtn = document.createElement("button");
+  chatPanelSend = panelSendBtn;
+  panelSendBtn.type = "button";
+  panelSendBtn.textContent = "↵";
+  panelSendBtn.style.cssText = `
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255,107,61,.3);
+    transition: background 0.12s;
+  `;
+  panelSendBtn.addEventListener("mouseenter", () => {
+    if (!panelSendBtn.disabled) panelSendBtn.style.background = "#ff825a";
+  });
+  panelSendBtn.addEventListener("mouseleave", () => {
+    if (!panelSendBtn.disabled) panelSendBtn.style.background = "#ff6b3d";
+  });
+  panelSendBtn.addEventListener("click", () => {
+    submitChatQuestion(input.value, "panel");
+  });
+
+  inputRow.appendChild(input);
+  inputRow.appendChild(panelSendBtn);
 
   const resizeHandle = document.createElement("div");
   resizeHandle.style.cssText = `
@@ -408,7 +449,7 @@ function ensureChatPanel() {
 
   panel.appendChild(header);
   panel.appendChild(messages);
-  panel.appendChild(input);
+  panel.appendChild(inputRow);
   panel.appendChild(resizeHandle);
   document.documentElement.appendChild(panel);
 
@@ -501,9 +542,15 @@ function renderChatHistory() {
 
   if (!chatHistory.length && !chatPending) {
     const empty = document.createElement("div");
-    empty.textContent = labels.chatEmpty;
     empty.style.cssText =
-      "padding:10px 12px;border-radius:12px;background:rgba(26,26,26,.5);border:1px solid rgba(255,255,255,.05);opacity:.78;line-height:1.45;";
+      "padding:10px 12px;border-radius:12px;background:rgba(26,26,26,.5);border:1px solid rgba(255,255,255,.05);opacity:.78;line-height:1.45;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80px;";
+    const emptyIcon = document.createElement("div");
+    emptyIcon.textContent = "✦";
+    emptyIcon.style.cssText = "font-size:22px;color:#ff6b3d;margin-bottom:6px;";
+    const emptyText = document.createElement("div");
+    emptyText.textContent = labels.chatEmpty;
+    empty.appendChild(emptyIcon);
+    empty.appendChild(emptyText);
     chatPanelMessages.appendChild(empty);
   } else {
     chatHistory.forEach((entry) => {
@@ -530,6 +577,7 @@ function setChatPendingState(value) {
   if (chatLauncherInput) chatLauncherInput.disabled = chatPending;
   if (chatLauncherSend) chatLauncherSend.disabled = chatPending;
   if (chatPanelInput) chatPanelInput.disabled = chatPending;
+  if (chatPanelSend) chatPanelSend.disabled = chatPending;
 }
 
 function formatChatErrorMessage(error) {

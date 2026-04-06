@@ -108,6 +108,9 @@ function ensureChatLauncher() {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   `;
 
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;gap:8px;align-items:center;";
+
   const input = document.createElement("input");
   chatLauncherInput = input;
   input.type = "text";
@@ -115,7 +118,8 @@ function ensureChatLauncher() {
   input.spellcheck = false;
   input.placeholder = labels.chatLauncherPlaceholder;
   input.style.cssText = `
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -124,6 +128,37 @@ function ensureChatLauncher() {
     font-size: 13px;
     box-sizing: border-box;
   `;
+  input.addEventListener("focus", () => {
+    input.style.outline = "2px solid rgba(255,107,61,.6)";
+    input.style.outlineOffset = "0";
+  });
+  input.addEventListener("blur", () => {
+    input.style.outline = "";
+    input.style.outlineOffset = "";
+  });
+
+  const sendBtn = document.createElement("button");
+  chatLauncherSend = sendBtn;
+  sendBtn.type = "button";
+  sendBtn.textContent = "↵";
+  sendBtn.style.cssText = `
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255,107,61,.3);
+    transition: background 0.12s;
+  `;
+  sendBtn.addEventListener("mouseenter", () => {
+    if (!sendBtn.disabled) sendBtn.style.background = "#ff825a";
+  });
+  sendBtn.addEventListener("mouseleave", () => {
+    if (!sendBtn.disabled) sendBtn.style.background = "#ff6b3d";
+  });
 
   const hint = document.createElement("div");
   chatLauncherHint = hint;
@@ -142,7 +177,13 @@ function ensureChatLauncher() {
     submitChatQuestion(input.value, "launcher");
   });
 
-  launcher.appendChild(input);
+  sendBtn.addEventListener("click", () => {
+    submitChatQuestion(input.value, "launcher");
+  });
+
+  row.appendChild(input);
+  row.appendChild(sendBtn);
+  launcher.appendChild(row);
   launcher.appendChild(hint);
   document.documentElement.appendChild(launcher);
 
@@ -172,6 +213,10 @@ function showChatLauncher() {
 
   const launcher = ensureChatLauncher();
   launcher.style.display = "block";
+  launcher.style.animation = "none";
+  requestAnimationFrame(() => {
+    launcher.style.animation = "pt-slide-up 0.18s ease-out";
+  });
   if (chatLauncherInput) {
     chatLauncherInput.disabled = chatPending;
     requestAnimationFrame(() => {
@@ -483,6 +528,7 @@ function setChatPendingState(value) {
   chatPending = Boolean(value);
 
   if (chatLauncherInput) chatLauncherInput.disabled = chatPending;
+  if (chatLauncherSend) chatLauncherSend.disabled = chatPending;
   if (chatPanelInput) chatPanelInput.disabled = chatPending;
 }
 

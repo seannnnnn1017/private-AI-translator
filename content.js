@@ -232,6 +232,7 @@ let fastModeLabel;
 let chatLauncher;
 let chatLauncherInput;
 let chatLauncherHint;
+let chatLauncherSend;
 let chatPanel;
 let chatPanelTitle;
 let chatPanelShortcut;

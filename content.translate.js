@@ -184,6 +184,8 @@ function showTranslation(original, translated, opts = {}) {
     `<div id="pt-translation-title" style="opacity:.9;margin-bottom:6px;font-weight:700;color:#ff6b3d;">${labels.translationTitle}</div>` +
     `<div style="background:rgba(26,26,26,.6);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.06);${isLoading ? "opacity:.7;font-style:italic;" : ""}">${safeTranslated || labels.loading}</div>`;
 
+  container.style.animation = "pt-fade-in 0.15s ease-out";
+
   container.querySelector("#pt-close")?.addEventListener("click", () => {
     container.remove();
     box = null;

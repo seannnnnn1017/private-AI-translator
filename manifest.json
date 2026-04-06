@@ -7,12 +7,10 @@
   "host_permissions": [
     "<all_urls>",
     "http://127.0.0.1:1234/*",
-    "http://localhost:1234/*",
-    "http://127.0.0.1:5005/*",
-    "http://localhost:5005/*"
+    "http://localhost:1234/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"]
   },
   "content_scripts": [
     {
@@ -25,5 +23,10 @@
         "content.bootstrap.js"
       ]
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "private-translator@example.com"
+    }
+  }
 }

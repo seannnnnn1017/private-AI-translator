@@ -92,16 +92,15 @@ const PROMPT_CONFIG = {
       file: "prompts/word_user.txt",
       fallback: `Word: {{text}}
 
-Output 1-3 common senses (do not force 3; avoid rare/archaic). If proper noun/abbr/non-word, briefly note likely meaning.
+List only meanings that genuinely exist and are in common use. Do NOT invent or stretch meanings to reach a higher count.
+Most words have 1 or 2 real meanings. Only go up to 3 if all three are truly distinct and commonly used.
+If the word has one clear meaning, output exactly one entry.
+If proper noun/abbr/non-word, briefly note likely meaning as a single entry.
 Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
-Each sense:
-1. **Meaning in {{target_language}}** (N.)
-   IELTS-style English example with **word**
-   Translation in {{target_language}}
-2. **Meaning in {{target_language}}** (N.)
-   IELTS-style English example with **word**
-   Translation in {{target_language}}
-3. **Meaning in {{target_language}}** (N.)
+Do NOT output labels like "Meaning in ..." or "Translation in ...".
+
+Format (use as many entries as meanings actually exist — not always 3):
+1. **Meaning in {{target_language}}** (POS)
    IELTS-style English example with **word**
    Translation in {{target_language}}`
     }
@@ -118,12 +117,14 @@ Each sense:
 Context sentence: {{context}}
 
 Stage 1: output only meanings + POS. No examples.
-If a context sentence is provided, prioritize meanings that fit the context.
+List only meanings that genuinely exist and are in common use. Do NOT invent or stretch meanings to reach a higher count.
+Most words have 1 or 2 real meanings. Only go up to 3 if all three are truly distinct and commonly used.
+If a context sentence is provided, prioritize the meaning that fits the context — you may output just that one.
 Use POS abbreviations: N., V., Adj., Adv., Prep., Conj., Pron., Det., Interj.
 Use numbered lines; one meaning per line. No extra text.
 
-Format:
-1. Meaning in {{target_language}} (N.)`
+Format (use as many lines as meanings actually exist — not always 3):
+1. Meaning in {{target_language}} (POS)`
     }
   },
   wordExample: {

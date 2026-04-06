@@ -1,156 +1,228 @@
-# Private AI Translator (Firefox + Chrome)
+# Private AI Translator
 
-A lightweight Firefox/Chrome extension that translates selected text using local or remote LLM APIs. It adds a small translate button near your selection, shows a draggable floating translation panel, and can play the original text via local `pyttsx3` TTS.
+A lightweight browser extension for Firefox and Chrome that translates selected text using a local or remote LLM API. It supports any OpenAI-compatible backend, including LM Studio, OpenAI, Google Gemini, and custom self-hosted servers.
+
+> Screenshot placeholder — overall UI overview
+
+---
 
 ## Features
 
-- Selection translate button (appears near the last selected character)
-- Draggable floating translation panel with close + play buttons
-- Language selector (中文 / 日文 / 英文)
-- Fast translate mode toggle
-- Configurable model API provider (LM Studio, OpenAI, Gemini, custom OpenAI-compatible API)
-- Quick English helper chat with `Command + /` (toggle open/close)
-- Draggable and resizable chat panel with in-page history
-- Markdown-rendered chat replies (headings, lists, dividers, tables, code blocks)
-- Selection-aware chat questions (the next chat message can refer to your highlighted text)
-- Context-aware single-word translation (uses the surrounding sentence to disambiguate)
-- Local prompts you can edit
-- Optional local TTS via `pyttsx3`
+### Translation
+- Click-to-translate button appears near any text selection
+- Draggable floating translation panel with close and TTS playback buttons
+- **Fast Translate mode** — streamlined single-call translation for speed
+- **Word mode** (default for single words) — two-stage pipeline:
+  - Stage 1: meanings + part-of-speech, informed by the surrounding sentence
+  - Stage 2: one example sentence per meaning with bold target word
+- **Context-aware disambiguation** — passes surrounding sentence to the model so single words are translated in context
+
+### Language Management
+- Dynamic language pill UI — add or remove any target language at any time
+- Preset languages with built-in UI labels: **Traditional Chinese**, **Japanese**, **English**
+- For any custom language (e.g. Spanish, Korean, French) the extension auto-generates localized UI labels via the active LLM and caches them
+- Pills show live generation state (pending `···` / failed `⚠`) and retry on click
+
+### English Chat Assistant
+- `Command + /` toggles the in-page English chat panel
+- Quick launcher appears near the bottom of the page on first open
+- Full chat panel is draggable (header) and resizable (bottom-right `◢` handle)
+- Selection-aware: highlight text before opening chat and your question can reference it
+- Markdown rendering: headings, lists, tables, code blocks, `---` dividers
+- Minimize (`-`) hides the panel while keeping history; close (`×`) resets history
+
+### API Providers
+| Provider | Default Base URL | Default Model |
+|---|---|---|
+| LM Studio | `http://127.0.0.1:1234` | `qwen/qwen3-8b` |
+| OpenAI | `https://api.openai.com` | `gpt-4.1-mini` |
+| Google Gemini | `https://generativelanguage.googleapis.com` | `gemini-2.0-flash` |
+| Custom | `http://127.0.0.1:1234` | `qwen/qwen3-8b` |
+
+Each provider has its own saved profile (base URL, model, API key). Switching providers restores the last-used profile for that provider.
+
+### Settings Panel
+- Floating `Lang` button fixed to the right edge of the page — drag to reposition
+- Expand to manage languages, toggle Fast Translate, and configure the API provider
+- API section collapses to save space
+
+### TTS Playback
+- Uses the browser's built-in [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) (`speechSynthesis`) — no external server required
+- Plays the original selected text when the **播放** button is clicked
+- Only shown for single-word translations
+
+---
 
 ## Requirements
 
-- Firefox (109+) or Chrome (Chromium-based, MV3)
-- One translation backend:
-  - LM Studio running locally
+- Firefox 109+ or any Chromium-based browser (Chrome, Edge, Brave, …)
+- One LLM backend:
+  - [LM Studio](https://lmstudio.ai) running locally
   - OpenAI API key
   - Google Gemini API key
-  - A self-hosted OpenAI-compatible API server
-- Python 3 + `pyttsx3` (for TTS)
+  - Any self-hosted OpenAI-compatible API server
+
+---
+
+## Installation
+
+### 1. Choose a browser manifest
+
+```bash
+# Firefox
+./use-manifest.sh firefox
+
+# Chrome / Chromium
+./use-manifest.sh chrome
+```
+
+This copies the correct manifest into `manifest.json`. **Always run this before loading the extension.**
+
+### 2. Load in Firefox
+
+1. Open `about:debugging`
+2. Click **This Firefox**
+3. Click **Load Temporary Add-on…**
+4. Select `manifest.json` in this folder
+
+### 3. Load in Chrome
+
+1. Open `chrome://extensions`
+2. Enable **Developer mode** (top-right toggle)
+3. Click **Load unpacked**
+4. Select this folder
+
+> Screenshot placeholder — Load Temporary Add-on in Firefox
+
+---
 
 ## Setup
 
-1. Pick the browser manifest (this copies the right file into `manifest.json`):
+### Configure the API Provider
 
-```bash
-./use-manifest.sh firefox
+Open any webpage and click the **Lang** button on the right edge to open the settings panel.
+
+1. Click the **Model API** section to expand it
+2. Select your provider from the dropdown
+3. Fill in the base URL, model name, and API key as needed
+
+**LM Studio** — make sure LM Studio is running and a model is loaded. The default endpoint is `http://127.0.0.1:1234`. No API key required.
+
+**OpenAI** — set your API key. The base URL defaults to `https://api.openai.com`.
+
+**Google Gemini** — set your API key. The base URL defaults to `https://generativelanguage.googleapis.com`.
+
+**Custom** — enter any OpenAI-compatible endpoint, model, and optional key.
+
+> Screenshot placeholder — Settings panel with API section expanded
+
+---
+
+## Usage
+
+### Translate Text
+
+1. Select any text on a webpage
+2. Click the small **翻譯** button that appears near the selection
+3. The floating translation panel shows the result — drag it by its header to reposition
+4. Click **播放** to hear the original text via browser TTS (single-word only)
+5. Click **×** to close the panel
+
+> Screenshot placeholder — translate button and floating result panel
+
+### Change Target Language
+
+1. Click the **Lang** button (right edge)
+2. Click any language pill to switch to it
+3. To add a new language, type it in the **Add a language…** field and press `Enter` or `+`
+   - Custom languages auto-generate localized labels in the background
+4. To remove a language, click **×** on its pill (at least one language must remain)
+
+> Screenshot placeholder — language pill UI
+
+### Chat Assistant
+
+- Press `Command + /` to open the chat
+- Type your question and press `Enter` to send
+- Highlight text on the page first to ask questions about it
+- Press `Command + /` again to toggle the panel; click `-` to minimize without clearing history; click `×` to reset
+
+> Screenshot placeholder — chat panel
+
+### Fast Translate Mode
+
+Toggle **Fast Translate** in the settings panel.
+
+| Mode | Sentence | Single Word |
+|---|---|---|
+| Off (default) | Translation prompt | Two-stage meanings + examples |
+| On | Translation prompt | Fast word prompt (meaning + one example in context) |
+
+---
+
+## Customizing Prompts
+
+All prompts are plain text files in `prompts/`. Use `{{target_language}}` where the target language name should appear.
+
+| File | Purpose |
+|---|---|
+| `prompts/translate_system.txt` | System prompt for sentence translation |
+| `prompts/translate_user.txt` | User message template for sentence translation |
+| `prompts/word_system.txt` | System prompt for word mode |
+| `prompts/word_user.txt` | User message template for word mode |
+| `prompts/word_meaning.txt` | Stage 1 prompt — meanings + POS only |
+| `prompts/word_example.txt` | Stage 2 prompt — example sentences |
+| `prompts/word_fast.txt` | Fast word prompt (context-aware, single call) |
+| `prompts/chat_system.txt` | System prompt for the chat assistant |
+| `prompts/chat_user.txt` | User message template for chat |
+
+After editing any prompt file, reload the extension in `about:debugging` or `chrome://extensions`.
+
+---
+
+## File Structure
+
+```
+manifest.json            Active manifest (copied from chrome/firefox variant)
+manifest.chrome.json     Chrome MV3 manifest (background.service_worker)
+manifest.firefox.json    Firefox manifest (background.scripts)
+use-manifest.sh          Copies selected manifest into manifest.json
+
+content.js               Shared state, constants, storage helpers, drag/resize, Markdown renderer
+content.translate.js     Selection tracking, translate button, translation panel, TTS playback
+content.chat.js          Chat launcher, chat panel, history management, rendering
+content.settings.js      Language pill UI, settings panel, API profile management, storage sync
+content.bootstrap.js     Content script runtime listeners and startup wiring
+background.js            Provider-aware LLM requests, prompt loading, settings state, TTS relay
+
+prompts/                 Editable plain-text prompt files
 ```
 
-Use `./use-manifest.sh chrome` before loading in Chrome.
-
-2. Load the extension in Firefox:
-
-- Open `about:debugging`
-- Click **This Firefox**
-- Click **Load Temporary Add-on...**
-- Select `manifest.json`
-
-3. Load the extension in Chrome:
-
-- Open `chrome://extensions`
-- Enable **Developer mode**
-- Click **Load unpacked**
-- Select this folder (the one with `manifest.json`)
-
-4. Open the extension settings panel on any page and choose your provider:
-
-- `LM Studio`: local OpenAI-compatible endpoint, default `http://127.0.0.1:1234`
-- `OpenAI / GPT`: set your OpenAI API key and model
-- `Google Gemini`: set your Gemini API key and model
-- `Custom API`: your own OpenAI-compatible server URL, model, and optional key
-
-5. (Optional) Start TTS server:
-
-```bash
-pip install pyttsx3
-python3 tts_server.py
-```
-
-## How to Use
-
-- Select text on any page.
-- Click the small **翻譯** button near the selection.
-- The floating panel shows the translation. You can drag or close it.
-- Click **播放** to speak the original text (requires TTS server).
-- Use the right-side settings panel to choose language, toggle fast mode, and configure the API provider/base URL/model/key.
-- Press `Command + /` to toggle the English chat UI.
-- On the first open (with no history), a quick input appears near the lower center of the page.
-- Press `Enter` in that quick input to open the full chat panel.
-- Once history exists, `Command + /` toggles the full chat panel directly.
-- If you highlight text before pressing `Command + /`, your next chat question can refer to that selection (for example, “how do I use this word?”).
-- Drag the chat header to move it, and drag the bottom-right `◢` handle to resize it.
-- In the chat header, `-` hides the panel but keeps history, while `×` clears history and fully closes it.
-- Chat replies render Markdown, including tables and `---` dividers.
-
-## Prompts
-
-Prompts are plain text files under `prompts/`. All prompts are written in English and use `{{target_language}}` to control output language (Traditional Chinese / Japanese / English).
-
-- Translation prompts:
-  - `prompts/translate_system.txt`
-  - `prompts/translate_user.txt`
-- Word mode prompts:
-  - `prompts/word_system.txt`
-  - `prompts/word_user.txt`
-- Two-stage word prompts:
-  - Meanings only: `prompts/word_meaning.txt`
-  - Examples only: `prompts/word_example.txt`
-- Fast word prompt (context-aware):
-  - `prompts/word_fast.txt`
-- English helper chat prompts:
-  - `prompts/chat_system.txt`
-  - `prompts/chat_user.txt`
-
-After editing prompts, reload the extension.
-
-## Fast Translate Mode
-
-When **快速翻譯** is enabled:
-
-- Sentences use the translation prompt
-- Single words use a dedicated fast word prompt and include:
-  - The word meaning (best fit for the context sentence)
-  - One example sentence (with **bold** word) + translation
-
-## Word Mode (Default for Single Word)
-
-When **快速翻譯** is disabled and you select a single word:
-
-- Stage 1: get meanings + POS only (fast)
-- Stage 2: generate one example sentence per meaning
-- The context sentence is passed to Stage 1 to improve accuracy
-
-## TTS Notes
-
-- The extension sends TTS requests to `http://127.0.0.1:5005/tts`
-- TTS speaks the original text
-- The TTS server must keep running in the background
+---
 
 ## Troubleshooting
 
-- No translation:
-  - `LM Studio`: verify LM Studio is running and the base URL/model are correct.
-  - `OpenAI / Gemini`: verify the API key is valid and the selected model is available.
-  - `Custom API`: verify the server is OpenAI-compatible and reachable from the browser.
-- Chat table not rendering:
-  - Make sure the reply uses a normal Markdown table, not a fenced code block.
-  - Reload the extension after updating content script files (`content*.js`) or prompt files.
-- No TTS audio: verify `python3 tts_server.py` is running and `say "hello"` works.
-- Changes not applied: reload the extension in `about:debugging` or `chrome://extensions`.
-- Firefox install error about `background.service_worker`: run `./use-manifest.sh firefox` and reload the temporary add-on.
-- `Could not establish connection. Receiving end does not exist.`:
-  - In Chrome, make sure you loaded the Chrome manifest (`manifest.json` now defaults to Chrome settings).
-  - In Firefox, run `./use-manifest.sh firefox`, then reload the temporary add-on so the background script matches Firefox.
+**No translation appears**
+- *LM Studio*: confirm LM Studio is running, a model is loaded, and the base URL matches.
+- *OpenAI / Gemini*: confirm the API key is valid and the model name is correct.
+- *Custom API*: confirm the server is OpenAI-compatible and reachable from the browser.
 
-## Files
+**Custom language pill stuck on `···`**
+- The label generation request failed. Click the pill to retry. Check that your API provider is configured and reachable.
 
-- `content.js`: shared state + common utilities (drag/resize, markdown rendering, shared helpers)
-- `content.translate.js`: translate button, selection tracking, translation card, TTS playback
-- `content.chat.js`: quick chat launcher, chat panel, chat history and rendering
-- `content.settings.js`: language/fast mode/API settings UI and storage sync
-- `content.bootstrap.js`: content runtime listeners and startup wiring
-- `background.js`: provider-aware translation and chat requests, prompt loading, settings state, TTS request
-- `tts_server.py`: local pyttsx3 TTS server
-- `manifest.firefox.json`: Firefox manifest (`background.scripts`)
-- `manifest.chrome.json`: Chrome manifest (`background.service_worker`)
-- `manifest.json`: active manifest used when loading the extension
-- `use-manifest.sh`: copies the selected browser manifest into `manifest.json`
+**No TTS audio**
+- TTS uses the browser's built-in `speechSynthesis` API. Make sure your browser supports it (all modern browsers do).
+- On some systems the browser may have no voices installed — check `speechSynthesis.getVoices()` in the browser console.
+
+**Chat table not rendering correctly**
+- Ensure the model returns a plain Markdown table (not wrapped in a fenced code block).
+
+**Changes to prompt files have no effect**
+- Reload the extension after editing prompt files or any `content*.js` file.
+
+**Firefox error about `background.service_worker`**
+- Run `./use-manifest.sh firefox`, then reload the temporary add-on.
+
+**`Could not establish connection. Receiving end does not exist.`**
+- *Chrome*: confirm you loaded the Chrome manifest (`./use-manifest.sh chrome`).
+- *Firefox*: run `./use-manifest.sh firefox`, then reload the temporary add-on.

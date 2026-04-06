@@ -937,7 +937,7 @@ async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
       model: profile.model,
       messages,
       temperature: 0.2,
-      ...((/qwen/i).test(profile.model) && { enable_thinking: false })
+      enable_thinking: false
     })
   });
 

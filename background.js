@@ -360,7 +360,9 @@ async function generateUiLabels(language) {
     }
   ];
 
-  const raw = await requestProviderCompletion(messages);
+  const raw = await requestProviderCompletion(messages, {
+    disableReasoning: true
+  });
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
   const parsed = JSON.parse(cleaned);
   // Merge: English fallback fills any keys the AI omitted
@@ -881,7 +883,9 @@ async function translateWithLMStudio(
     { role: "system", content: system },
     { role: "user", content: user }
   ];
-  return requestProviderCompletion(messages);
+  return requestProviderCompletion(messages, {
+    disableReasoning: true
+  });
 }
 
 function sanitizeChatHistory(history) {
@@ -991,6 +995,26 @@ function buildOpenAiCompatibleUrl(baseUrl) {
   return `${normalized}/v1/chat/completions`;
 }
 
+function buildLmStudioNativeUrl(baseUrl) {
+  const normalized = trimBaseUrl(baseUrl);
+  if (/\/api\/v1\/chat$/i.test(normalized)) {
+    return normalized;
+  }
+  if (/\/api\/v1$/i.test(normalized)) {
+    return `${normalized}/chat`;
+  }
+  if (/\/v1\/chat\/completions$/i.test(normalized)) {
+    return normalized.replace(/\/v1\/chat\/completions$/i, "/api/v1/chat");
+  }
+  if (/\/chat\/completions$/i.test(normalized)) {
+    return normalized.replace(/\/chat\/completions$/i, "/api/v1/chat");
+  }
+  if (/\/v1$/i.test(normalized)) {
+    return normalized.replace(/\/v1$/i, "/api/v1/chat");
+  }
+  return `${normalized}/api/v1/chat`;
+}
+
 function buildGeminiUrl(baseUrl, model, apiKey) {
   const normalized = trimBaseUrl(baseUrl);
   const apiRoot = /\/v1beta$/i.test(normalized)
@@ -1014,7 +1038,55 @@ function stripThinkBlocks(text) {
   return trimString(text).replace(THINK_BLOCK_RE, "").trim();
 }
 
-async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
+function buildLmStudioInput(messages) {
+  return messages
+    .map((msg) => {
+      const role =
+        msg?.role === "system" || msg?.role === "assistant"
+          ? msg.role
+          : "user";
+      const content = trimString(msg?.content);
+      if (!content) return "";
+      return `${role}:\n${content}`;
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function readLmStudioMessageContent(content) {
+  if (typeof content === "string") return content.trim();
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (typeof part?.text === "string") return part.text;
+        return "";
+      })
+      .join("")
+      .trim();
+  }
+  if (typeof content?.text === "string") return content.text.trim();
+  return "";
+}
+
+function readLmStudioOutputMessage(output) {
+  if (!Array.isArray(output)) return "";
+
+  for (const item of output) {
+    if (item?.type !== "message") continue;
+    const text = readLmStudioMessageContent(item.content);
+    if (text) return text;
+  }
+
+  return "";
+}
+
+async function requestOpenAiCompatibleCompletion(
+  provider,
+  profile,
+  messages,
+  options = {}
+) {
   const headers = { "Content-Type": "application/json" };
 
   if (provider === "openai" && !profile.apiKey) {
@@ -1024,15 +1096,21 @@ async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
     headers.Authorization = `Bearer ${profile.apiKey}`;
   }
 
+  const body = {
+    model: profile.model,
+    messages,
+    temperature: 0.2
+  };
+
+  if (options.disableReasoning) {
+    body.reason = "off";
+    body.enable_thinking = false;
+  }
+
   const res = await fetch(buildOpenAiCompatibleUrl(profile.baseUrl), {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      model: profile.model,
-      messages,
-      temperature: 0.2,
-      enable_thinking: false
-    })
+    body: JSON.stringify(body)
   });
 
   const data = await res.json().catch(() => null);
@@ -1045,6 +1123,40 @@ async function requestOpenAiCompatibleCompletion(provider, profile, messages) {
     readOpenAiMessageContent(data?.choices?.[0]?.message?.content)
   );
   if (!out) throw new Error("No content in response");
+  return out;
+}
+
+async function requestLmStudioCompletion(profile, messages, options = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (profile.apiKey) {
+    headers.Authorization = `Bearer ${profile.apiKey}`;
+  }
+
+  const body = {
+    model: profile.model,
+    input: buildLmStudioInput(messages),
+    temperature: 0.2,
+    max_output_tokens: 1024
+  };
+
+  if (options.disableReasoning) {
+    body.reasoning = "off";
+  }
+
+  const res = await fetch(buildLmStudioNativeUrl(profile.baseUrl), {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message = getProviderErrorMessage("LM Studio", data, res.status);
+    throw new Error(message);
+  }
+
+  const out = stripThinkBlocks(readLmStudioOutputMessage(data?.output));
+  if (!out) throw new Error("No content in LM Studio response");
   return out;
 }
 
@@ -1117,7 +1229,7 @@ async function requestGeminiCompletion(profile, messages) {
   return out;
 }
 
-async function requestProviderCompletion(messages) {
+async function requestProviderCompletion(messages, options = {}) {
   const settings = normalizeApiSettings(currentApiSettings);
   const provider = settings.provider;
   const profile = getActiveApiProfile(settings);
@@ -1126,5 +1238,9 @@ async function requestProviderCompletion(messages) {
     return requestGeminiCompletion(profile, messages);
   }
 
-  return requestOpenAiCompatibleCompletion(provider, profile, messages);
+  if (provider === "lmstudio" && options.disableReasoning) {
+    return requestLmStudioCompletion(profile, messages, options);
+  }
+
+  return requestOpenAiCompatibleCompletion(provider, profile, messages, options);
 }

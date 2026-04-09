@@ -597,36 +597,24 @@ async function triggerLabelGeneration(lang) {
 }
 
 function notifyLanguage(lang) {
-  try {
-    sendMessage({
-      type: "SET_LANGUAGE",
-      language: lang
-    });
-  } catch (err) {
-    // ignore
-  }
+  fireAndForgetMessage({
+    type: "SET_LANGUAGE",
+    language: lang
+  });
 }
 
 function notifyFastMode(enabled) {
-  try {
-    sendMessage({
-      type: "SET_FAST_MODE",
-      enabled: Boolean(enabled)
-    });
-  } catch (err) {
-    // ignore
-  }
+  fireAndForgetMessage({
+    type: "SET_FAST_MODE",
+    enabled: Boolean(enabled)
+  });
 }
 
 function notifyApiSettings(settings) {
-  try {
-    sendMessage({
-      type: "SET_API_SETTINGS",
-      settings
-    });
-  } catch (err) {
-    // ignore
-  }
+  fireAndForgetMessage({
+    type: "SET_API_SETTINGS",
+    settings
+  });
 }
 
 async function saveLanguageSetting(lang) {

@@ -10,7 +10,7 @@
     "http://localhost:1234/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
@@ -23,10 +23,5 @@
         "content.bootstrap.js"
       ]
     }
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "private-translator@example.com"
-    }
-  }
+  ]
 }

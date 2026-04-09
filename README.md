@@ -76,7 +76,14 @@ Each provider has its own saved profile (base URL, model, API key). Switching pr
 ./use-manifest.sh chrome
 ```
 
-This copies the correct manifest into `manifest.json`. **Always run this before loading the extension.**
+On Windows PowerShell, use:
+
+```powershell
+.\use-manifest.ps1 firefox
+.\use-manifest.ps1 chrome
+```
+
+`manifest.json` is what browsers actually load. This repo now defaults `manifest.json` to the Chrome version, so Chrome can be loaded directly. Switch to the Firefox manifest before loading it in Firefox.
 
 ### 2. Load in Firefox
 
@@ -187,6 +194,7 @@ manifest.json            Active manifest (copied from chrome/firefox variant)
 manifest.chrome.json     Chrome MV3 manifest (background.service_worker)
 manifest.firefox.json    Firefox manifest (background.scripts)
 use-manifest.sh          Copies selected manifest into manifest.json
+use-manifest.ps1         PowerShell version of the manifest switcher
 
 content.js               Shared state, constants, storage helpers, drag/resize, Markdown renderer
 content.translate.js     Selection tracking, translate button, translation panel, TTS playback
@@ -221,8 +229,9 @@ prompts/                 Editable plain-text prompt files
 - Reload the extension after editing prompt files or any `content*.js` file.
 
 **Firefox error about `background.service_worker`**
-- Run `./use-manifest.sh firefox`, then reload the temporary add-on.
+- Run `./use-manifest.sh firefox` or `.\use-manifest.ps1 firefox`, then reload the temporary add-on.
 
 **`Could not establish connection. Receiving end does not exist.`**
-- *Chrome*: confirm you loaded the Chrome manifest (`./use-manifest.sh chrome`).
-- *Firefox*: run `./use-manifest.sh firefox`, then reload the temporary add-on.
+- Refresh the page after reloading or updating the extension. Existing content scripts stay on the old version until the tab reloads.
+- *Chrome*: make sure `manifest.json` is the Chrome one. If needed, run `./use-manifest.sh chrome` or `.\use-manifest.ps1 chrome`.
+- *Firefox*: run `./use-manifest.sh firefox` or `.\use-manifest.ps1 firefox`, then reload the temporary add-on.

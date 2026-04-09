@@ -34,6 +34,38 @@ function storageSet(payload) {
   }
 }
 
+function getErrorMessage(err) {
+  if (err instanceof Error && err.message) return err.message;
+  return String(err || "").trim();
+}
+
+function isMissingReceiverError(err) {
+  return /Receiving end does not exist/i.test(getErrorMessage(err));
+}
+
+function sendTabMessage(tabId, message) {
+  if (tabId == null) return Promise.resolve(false);
+
+  try {
+    return asPromise(ext.tabs.sendMessage(tabId, message), () =>
+      new Promise((resolve, reject) => {
+        ext.tabs.sendMessage(tabId, message, (res) => {
+          const err = ext.runtime?.lastError;
+          err ? reject(err) : resolve(res);
+        });
+      })
+    )
+      .then(() => true)
+      .catch((err) => {
+        if (isMissingReceiverError(err)) return false;
+        return Promise.reject(err);
+      });
+  } catch (err) {
+    if (isMissingReceiverError(err)) return Promise.resolve(false);
+    return Promise.reject(err);
+  }
+}
+
 const SETTINGS_KEY = "ptLanguage";
 const SETTINGS_FAST_KEY = "ptFastTranslate";
 const API_SETTINGS_KEY = "ptApiSettings";
@@ -599,11 +631,12 @@ async function sendWordTwoStage(
   const meaning = limitMeaningList(rawMeaning, 3);
 
   if (tabId != null) {
-    ext.tabs.sendMessage(tabId, {
+    const delivered = await sendTabMessage(tabId, {
       type: "SHOW_TRANSLATION",
       original: originalText,
       translated: meaning
     });
+    if (!delivered) return;
   }
 
   try {
@@ -617,7 +650,7 @@ async function sendWordTwoStage(
 
     const combined = mergeMeaningAndExamples(meaning, examples);
     if (tabId != null) {
-      ext.tabs.sendMessage(tabId, {
+      await sendTabMessage(tabId, {
         type: "SHOW_TRANSLATION",
         original: originalText,
         translated: combined
@@ -625,7 +658,7 @@ async function sendWordTwoStage(
     }
   } catch (err) {
     if (tabId != null) {
-      ext.tabs.sendMessage(tabId, {
+      await sendTabMessage(tabId, {
         type: "SHOW_TRANSLATION",
         original: originalText,
         translated: `${meaning}\n\n（例句生成失敗）`
@@ -683,13 +716,13 @@ ext.contextMenus.onClicked.addListener(async (info, tab) => {
       mode === "wordFast" && isWord
         ? highlightFastOutput(translated, promptText)
         : translated;
-    ext.tabs.sendMessage(tab.id, {
+    await sendTabMessage(tab.id, {
       type: "SHOW_TRANSLATION",
       original: text,
       translated: resultText
     });
   } catch (err) {
-    ext.tabs.sendMessage(tab.id, {
+    await sendTabMessage(tab.id, {
       type: "SHOW_TRANSLATION",
       original: text,
       translated: `（翻譯失敗）${String(err?.message || err)}`
@@ -807,7 +840,7 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           ? highlightFastOutput(translated, promptText)
           : translated;
       if (tabId != null) {
-        ext.tabs.sendMessage(tabId, {
+        await sendTabMessage(tabId, {
           type: "SHOW_TRANSLATION",
           original: text,
           translated: resultText
@@ -815,7 +848,7 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
     } catch (err) {
       if (tabId != null) {
-        ext.tabs.sendMessage(tabId, {
+        await sendTabMessage(tabId, {
           type: "SHOW_TRANSLATION",
           original: text,
           translated: `（翻譯失敗）${String(err?.message || err)}`

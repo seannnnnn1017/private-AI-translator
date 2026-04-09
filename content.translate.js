@@ -37,7 +37,7 @@
     const context = getSelectionContextText(text);
     if (!text) return;
     showTranslation(text, getUiLabels().loading, { loading: true });
-    sendMessage({
+    fireAndForgetMessage({
       type: "TRANSLATE_TEXT",
       text,
       context,

@@ -34,6 +34,37 @@ function storageSet(payload) {
   }
 }
 
+const EXTENSION_DISCONNECTED_MESSAGE =
+  "Extension connection lost. Refresh this page and try again.";
+
+let lastConnectionNoticeAt = 0;
+
+function getErrorMessage(err) {
+  if (err instanceof Error && err.message) return err.message;
+  return String(err || "").trim();
+}
+
+function isMissingReceiverError(err) {
+  return /Receiving end does not exist/i.test(getErrorMessage(err));
+}
+
+function normalizeSendMessageError(err) {
+  const message = getErrorMessage(err) || "Unknown extension error";
+  if (isMissingReceiverError(err)) {
+    const now = Date.now();
+    if (now - lastConnectionNoticeAt > 1500) {
+      lastConnectionNoticeAt = now;
+      if (typeof showTranslation === "function") {
+        showTranslation("Private Translator", EXTENSION_DISCONNECTED_MESSAGE);
+      } else {
+        console.warn(EXTENSION_DISCONNECTED_MESSAGE);
+      }
+    }
+    return new Error(EXTENSION_DISCONNECTED_MESSAGE);
+  }
+  return err instanceof Error ? err : new Error(message);
+}
+
 function sendMessage(msg) {
   try {
     return asPromise(ext.runtime.sendMessage(msg), () =>
@@ -43,10 +74,14 @@ function sendMessage(msg) {
           err ? reject(err) : resolve(res);
         });
       })
-    );
+    ).catch((err) => Promise.reject(normalizeSendMessageError(err)));
   } catch (err) {
-    return Promise.reject(err);
+    return Promise.reject(normalizeSendMessageError(err));
   }
+}
+
+function fireAndForgetMessage(msg) {
+  sendMessage(msg).catch(() => {});
 }
 
 let box;

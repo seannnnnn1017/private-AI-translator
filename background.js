@@ -800,6 +800,27 @@ ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  if (msg?.type === "TRANSLATE_ELEMENT") {
+    const text = trimString(msg.text);
+    const language = normalizeLanguage(msg.language || currentLanguage);
+    if (!text) {
+      sendResponse({ ok: false, error: "EMPTY_TEXT" });
+      return true;
+    }
+
+    (async () => {
+      try {
+        await ensureSettingsLoaded();
+        const translated = await translateWithLMStudio(text, "translate", language, { context: text });
+        sendResponse({ ok: true, translated });
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err?.message || err || "Translation failed") });
+      }
+    })();
+
+    return true;
+  }
+
   if (msg?.type !== "TRANSLATE_TEXT") return;
 
   const text = msg.text || "";

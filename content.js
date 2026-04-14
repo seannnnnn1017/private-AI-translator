@@ -95,6 +95,8 @@ const CHAT_PANEL_MIN_WIDTH = 320;
 const CHAT_PANEL_MIN_HEIGHT = 240;
 const CHAT_SHORTCUT_CODE = "Slash";
 const CHAT_SHORTCUT_LABEL = "Command + /";
+const PAGE_TRANSLATE_SHORTCUT_CODE = "KeyT";
+const PAGE_TRANSLATE_SHORTCUT_LABEL = "Alt + T";
 const SETTINGS_KEY = "ptLanguage";
 const SETTINGS_FAST_KEY = "ptFastTranslate";
 const API_SETTINGS_KEY = "ptApiSettings";
@@ -160,7 +162,11 @@ const UI_LABELS = {
     close: "關閉",
     loading: "翻譯中...",
     ttsGenerating: "產生中",
-    ttsFailed: "失敗"
+    ttsFailed: "失敗",
+    pageTranslateBtn: "翻譯整頁",
+    pageTranslateCancel: "停止",
+    pageTranslating: "翻譯中",
+    pageTranslateDone: "翻譯完成"
   },
   ja: {
     toggle: "言語",
@@ -189,7 +195,11 @@ const UI_LABELS = {
     close: "閉じる",
     loading: "翻訳中...",
     ttsGenerating: "生成中",
-    ttsFailed: "失敗"
+    ttsFailed: "失敗",
+    pageTranslateBtn: "ページを翻訳",
+    pageTranslateCancel: "停止",
+    pageTranslating: "翻訳中",
+    pageTranslateDone: "翻訳完了"
   },
   en: {
     toggle: "Lang",
@@ -217,7 +227,11 @@ const UI_LABELS = {
     close: "Close",
     loading: "Translating...",
     ttsGenerating: "Generating",
-    ttsFailed: "Failed"
+    ttsFailed: "Failed",
+    pageTranslateBtn: "Translate Page",
+    pageTranslateCancel: "Stop",
+    pageTranslating: "Translating",
+    pageTranslateDone: "Translation complete"
   }
 };
 const API_PROVIDER_OPTION_LABELS = {
@@ -276,6 +290,8 @@ let chatPanelInput;
 let chatPanelMinimize;
 let chatPanelClose;
 let chatPanelSend;
+let pageTranslateActive = false;
+let pageTranslateAborted = false;
 let settingsDragMoved = false;
 let lastSelectionRect = null;
 let lastRequestRect = null;
